@@ -10,3 +10,9 @@ Remotely source SSH authorized_keys
 urls:
 - https://github.com/dolph.keys
 ```
+
+## Usage
+
+```
+$ ssh-doorman
+```
