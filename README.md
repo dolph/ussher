@@ -1,6 +1,6 @@
 # ssh-doorman
 
-Remotely source SSH authorized_keys
+Remotely source SSH `authorized_keys`.
 
 ## Configuration
 
