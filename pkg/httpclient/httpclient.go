@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dolph/ssh-doorman/pkg/cache"
+	"github.com/dolph/ussher/pkg/cache"
 )
 
 type Client struct {
@@ -20,7 +20,7 @@ type Client struct {
 func New() *Client {
 	return &Client{
 		http:  &http.Client{},
-		cache: cache.New("/var/cache/ssh-doorman"),
+		cache: cache.New("/var/cache/ussher"),
 	}
 }
 

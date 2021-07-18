@@ -1,4 +1,4 @@
-module github.com/dolph/ssh-doorman
+module github.com/dolph/ussher
 
 go 1.16
 

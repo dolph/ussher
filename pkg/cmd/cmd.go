@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/dolph/ssh-doorman/pkg/config"
-	"github.com/dolph/ssh-doorman/pkg/httpclient"
+	"github.com/dolph/ussher/pkg/config"
+	"github.com/dolph/ussher/pkg/httpclient"
 )
 
 func Run(c *config.Config) {

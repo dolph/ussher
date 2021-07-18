@@ -1,4 +1,4 @@
-# ssh-doorman
+# `ussher`
 
 Remotely source SSH `authorized_keys`.
 
