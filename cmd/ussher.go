@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/dolph/ssh-doorman/pkg/cmd"
-	"github.com/dolph/ssh-doorman/pkg/config"
+	"github.com/dolph/ussher/pkg/cmd"
+	"github.com/dolph/ussher/pkg/config"
 )
 
 func main() {
