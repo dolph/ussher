@@ -10,13 +10,11 @@ import (
 	"github.com/dolph/ssh-doorman/pkg/config"
 )
 
-func getURL(url string, wg *sync.WaitGroup) string {
-	defer wg.Done()
-
+func getURL(url string) string {
 	resp, err := http.Get(url)
-
 	if err != nil {
 		log.Fatal(err)
+		return ""
 	}
 	defer resp.Body.Close()
 
@@ -24,8 +22,9 @@ func getURL(url string, wg *sync.WaitGroup) string {
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			log.Fatal(err)
+			return ""
 		}
-		fmt.Print(string(bodyBytes))
+		return string(bodyBytes)
 	}
 	return ""
 }
@@ -33,9 +32,26 @@ func getURL(url string, wg *sync.WaitGroup) string {
 func Run(c *config.Config) {
 	var wg sync.WaitGroup
 
+	keyChan := make(chan string)
+
 	for _, url := range c.Urls {
 		wg.Add(1)
-		go getURL(url, &wg)
+		go func(url string) {
+			defer wg.Done()
+			keyChan <- getURL(url)
+		}(url)
 	}
-	wg.Wait()
+
+	// Close keyChan whenever it's done
+	go func() {
+		wg.Wait()
+		close(keyChan)
+	}()
+
+	// Collect keys from keyChan
+	var keys []string
+	for k := range keyChan {
+		keys = append(keys, k)
+		fmt.Print(k)
+	}
 }
