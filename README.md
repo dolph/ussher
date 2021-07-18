@@ -14,5 +14,5 @@ urls:
 ## Usage
 
 ```
-$ ssh-doorman
+$ ussher
 ```
