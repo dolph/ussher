@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/dolph/ussher/pkg/cmd"
-	"github.com/dolph/ussher/pkg/config"
+	"github.com/dolph/ussher/cmd"
+	"github.com/dolph/ussher/config"
 )
 
 func main() {
