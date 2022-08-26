@@ -1,6 +1,6 @@
 // Package cache provides a caching implementation that uses the diskv package
 // to supplement an in-memory map with persistent storage.
-package cache
+package main
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ type Cache struct {
 	d *diskv.Diskv
 }
 
-func New(basePath string) *Cache {
+func NewCache(basePath string) *Cache {
 	return &Cache{
 		d: diskv.New(diskv.Options{
 			BasePath:     basePath,

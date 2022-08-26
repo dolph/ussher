@@ -16,3 +16,9 @@ urls:
 ```
 $ ussher
 ```
+
+## Building
+
+```
+$ go build
+```

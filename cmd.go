@@ -1,17 +1,14 @@
-package cmd
+package main
 
 import (
 	"fmt"
 	"sync"
-
-	"github.com/dolph/ussher/pkg/config"
-	"github.com/dolph/ussher/pkg/httpclient"
 )
 
-func Run(c *config.Config) {
+func Run(c *Config) {
 	var wg sync.WaitGroup
 
-	client := httpclient.New()
+	client := NewHTTPClient()
 	keyChan := make(chan []string)
 	for _, url := range c.Urls {
 		wg.Add(1)
