@@ -14,7 +14,9 @@ func Run(c *Config) {
 		wg.Add(1)
 		go func(source Source) {
 			defer wg.Done()
-			keyChan <- client.GetURL(source.Url)
+			if source.Url != "" {
+				keyChan <- client.GetURL(source.Url)
+			}
 		}(source)
 	}
 
