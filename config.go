@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -18,7 +17,6 @@ func (c *Config) Load() *Config {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(homedir)
 	yamlFile, err := ioutil.ReadFile(homedir + "/.ssh/authorized_keys.yml")
 	if err != nil {
 		log.Printf("ioutil read %v ", err)
