@@ -8,8 +8,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type Source struct {
+	Url string `yaml:"url"`
+}
+
 type Config struct {
-	Urls []string `yaml:"urls"`
+	Sources []Source `yaml:"sources"`
 }
 
 func (c *Config) Load() *Config {

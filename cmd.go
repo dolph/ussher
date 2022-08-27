@@ -10,12 +10,12 @@ func Run(c *Config) {
 
 	client := NewHTTPClient()
 	keyChan := make(chan []string)
-	for _, url := range c.Urls {
+	for _, source := range c.Sources {
 		wg.Add(1)
-		go func(url string) {
+		go func(source Source) {
 			defer wg.Done()
-			keyChan <- client.GetURL(url)
-		}(url)
+			keyChan <- client.GetURL(source.Url)
+		}(source)
 	}
 
 	// Close keyChan whenever it's done
@@ -24,7 +24,7 @@ func Run(c *Config) {
 		close(keyChan)
 	}()
 
-	// Collect keys from keyChan
+	// Output keys from keyChan
 	var keys []string
 	for results := range keyChan {
 		for _, k := range results {
