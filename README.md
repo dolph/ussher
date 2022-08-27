@@ -2,13 +2,11 @@
 
 `ussher` aims to provide a backend for `sshd`'s [`AuthorizedKeysCommand`
 option](https://man.openbsd.org/sshd_config.5#AuthorizedKeysCommand), by
-remotely sourcing SSH `authorized_keys`.
+remotely sourcing SSH `authorized_keys`. In short:
 
 > `AuthorizedKeysCommand`: Specifies a program to be used to look up the user's
   public keys. The program must be owned by root, not writable by group or
-  others and specified by an absolute path. Arguments to
-  `AuthorizedKeysCommand` accept the tokens described in the TOKENS section. If
-  no arguments are specified then the username of the target user is used.
+  others and specified by an absolute path.
 >
 > The program should produce on standard output zero or more lines of
   authorized_keys output. `AuthorizedKeysCommand` is tried after the usual
