@@ -13,11 +13,11 @@ type Config struct {
 }
 
 func (c *Config) Load() *Config {
-	homedir, err := os.UserHomeDir()
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
 	}
-	yamlFile, err := ioutil.ReadFile(homedir + "/.ssh/authorized_keys.yml")
+	yamlFile, err := ioutil.ReadFile(homeDir + "/.ssh/authorized_keys.yml")
 	if err != nil {
 		log.Printf("ioutil read %v ", err)
 	}
