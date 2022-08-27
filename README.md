@@ -9,6 +9,7 @@ remotely sourcing SSH `authorized_keys`.
   others and specified by an absolute path. Arguments to
   `AuthorizedKeysCommand` accept the tokens described in the TOKENS section. If
   no arguments are specified then the username of the target user is used.
+>
 > The program should produce on standard output zero or more lines of
   authorized_keys output. `AuthorizedKeysCommand` is tried after the usual
   `AuthorizedKeysFile` files and will not be executed if a matching key is
