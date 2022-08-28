@@ -7,6 +7,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"io"
+	"log"
 
 	"github.com/peterbourgon/diskv"
 )
@@ -28,17 +29,21 @@ func (c *Cache) Get(key string) (value []byte, ok bool) {
 	filename := keyToFilename(key)
 	value, err := c.d.Read(filename)
 	if err != nil {
+		log.Print("Cache MISS: ", key)
 		return []byte{}, false
 	}
+	log.Print("Cache HIT: ", key)
 	return value, true
 }
 
 func (c *Cache) Set(key string, value []byte) {
+	log.Print("Cache SET: ", key)
 	filename := keyToFilename(key)
 	c.d.WriteStream(filename, bytes.NewReader(value), true)
 }
 
 func (c *Cache) Delete(key string) {
+	log.Print("Cache DELETE: ", key)
 	filename := keyToFilename(key)
 	c.d.Erase(filename)
 }

@@ -58,7 +58,9 @@ func (c *Client) GetGHE(ghe GithubEnterprise) []string {
 
 	/* This will cache responses regardless of the token in context here, which could be a security risk. */
 	if cached, ok := c.cache.Get(url); ok {
-		return bodyToKeys(cached)
+		var keys []GHEKey
+		json.Unmarshal(cached, &keys)
+		return GHEKeysToKeys(keys)
 	}
 
 	req, err := http.NewRequest("GET", url, nil)
