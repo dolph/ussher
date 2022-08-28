@@ -13,6 +13,11 @@ remotely sourcing SSH `authorized_keys`. In short:
   `AuthorizedKeysFile` files and will not be executed if a matching key is
   found there. By default, no `AuthorizedKeysCommand` is run.
 
+When `~/.ssh/authorized_keys` does not contain the keys required to
+authenticate a user, `sshd` invokes `ussher` to provide additional,
+remotely-sourced keys, such as from Github or another identity and access
+management provider.
+
 ## Configuration
 
 `~/.ssh/authorized_keys.yml`:
