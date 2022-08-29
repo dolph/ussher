@@ -29,10 +29,8 @@ func Run(c *Config) {
 	}()
 
 	// Output keys from keyChan
-	var keys []string
 	for results := range keyChan {
 		for _, k := range results {
-			append(keys, k)
 			fmt.Println(k)
 		}
 	}
