@@ -28,7 +28,7 @@ func NewCache(basePath string) *Cache {
 func (c *Cache) Get(key string) (value []byte, ok bool) {
 	filename := keyToFilename(key)
 	if filename == "" {
-		log.Print("Skipping unusable cache: %v", filename)
+		log.Printf("Skipping unusable cache: %v", filename)
 		return []byte{}, false
 	}
 	value, err := c.d.Read(filename)
