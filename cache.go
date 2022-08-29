@@ -37,15 +37,23 @@ func (c *Cache) Get(key string) (value []byte, ok bool) {
 }
 
 func (c *Cache) Set(key string, value []byte) {
-	log.Print("Cache SET: ", key)
 	filename := keyToFilename(key)
-	c.d.WriteStream(filename, bytes.NewReader(value), true)
+	err := c.d.WriteStream(filename, bytes.NewReader(value), true)
+	if err != nil {
+		log.Printf("Failed to write %v to cache:", key, err)
+		return
+	}
+	log.Print("Cache SET: ", key)
 }
 
 func (c *Cache) Delete(key string) {
-	log.Print("Cache DELETE: ", key)
 	filename := keyToFilename(key)
-	c.d.Erase(filename)
+	err := c.d.Erase(filename)
+	if err != nil {
+		log.Printf("Failed to delete %v from cache:", key, err)
+		return
+	}
+	log.Print("Cache DELETE: ", key)
 }
 
 func keyToFilename(key string) string {

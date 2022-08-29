@@ -11,6 +11,15 @@ func securityCheck() {
 	}
 }
 
+func initLog() {
+	file, err := os.OpenFile("/var/log/ussher/ussher.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.SetOutput(file)
+}
+
 func main() {
 	securityCheck()
 	if len(os.Args) != 2 {
