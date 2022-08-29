@@ -39,6 +39,8 @@ urls:
 
    ```bash
    sudo cp ussher /usr/bin/ussher
+   sudo chown root:root /usr/bin/ussher
+   sudo chmod 0700 /usr/bin/ussher
    ```
 
 3. Create a directory for caching remotely-sourced data.
@@ -47,4 +49,25 @@ urls:
    sudo mkdir --parents /var/cache
    sudo mkdir --parents --mode=0700 /var/cache/ussher
    sudo chown ussher:ussher /var/cache/ussher
+   ```
+
+4. Create a directory for logging.
+
+   ```bash
+   sudo mkdir --parents --mode=0700 /var/log/ussher
+   sudo chown ussher:ussher /var/log/ussher
+   ```
+
+5. Configure `sshd` to invoke `ussher`. Add the following lines to
+   `/etc/ssh/sshd_config`:
+
+   ```
+   AuthorizedKeysCommand /usr/bin/ussher
+   AuthorizedKeysCommandUser ussher
+   ```
+
+   Restart `sshd`, for example:
+
+   ```bash
+   sudo systemctl restart sshd
    ```
