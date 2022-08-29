@@ -61,7 +61,7 @@ func (c *Client) GetGHE(ghe GithubEnterprise) []string {
 		var keys []GHEKey
 		err := json.Unmarshal(cached, &keys)
 		if err != nil {
-			log.Printf("Failed to decode JSON from cache for %v: ", url, err)
+			log.Printf("Failed to decode JSON from cache for %v: %v", url, err)
 			return make([]string, 0)
 		}
 		return GHEKeysToKeys(keys)
