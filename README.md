@@ -22,19 +22,29 @@ management provider.
 
 `~/.ssh/authorized_keys.yml`:
 
-```
+```yaml
 urls:
 - https://github.com/dolph.keys
 ```
 
-## Usage
+## Recommended installation & usage
 
-```
-$ ussher
-```
+1. Create a dedicated user and group to run `ussher`, named `ussher`:
 
-## Building
+   ```bash
+   sudo useradd --system --user-group ussher
+   ```
 
-```
-$ go build
-```
+2. Install the `ussher` binary to `/usr/sbin/ussher`.
+
+   ```bash
+   sudo cp ussher /usr/bin/ussher
+   ```
+
+3. Create a directory for caching remotely-sourced data.
+
+   ```bash
+   sudo mkdir --parents /var/cache
+   sudo mkdir --parents --mode=0700 /var/cache/ussher
+   sudo chown ussher:ussher /var/cache/ussher
+   ```
