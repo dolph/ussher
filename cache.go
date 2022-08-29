@@ -27,6 +27,10 @@ func NewCache(basePath string) *Cache {
 
 func (c *Cache) Get(key string) (value []byte, ok bool) {
 	filename := keyToFilename(key)
+	if filename == "" {
+		log.Print("Skipping unusable cache: %v", filename)
+		return []byte{}, false
+	}
 	value, err := c.d.Read(filename)
 	if err != nil {
 		log.Print("Cache MISS: ", key)
@@ -38,8 +42,7 @@ func (c *Cache) Get(key string) (value []byte, ok bool) {
 
 func (c *Cache) Set(key string, value []byte) {
 	filename := keyToFilename(key)
-	err := c.d.WriteStream(filename, bytes.NewReader(value), true)
-	if err != nil {
+	if err := c.d.WriteStream(filename, bytes.NewReader(value), true); err != nil {
 		log.Printf("Failed to write %v to cache:", key, err)
 		return
 	}
@@ -48,8 +51,7 @@ func (c *Cache) Set(key string, value []byte) {
 
 func (c *Cache) Delete(key string) {
 	filename := keyToFilename(key)
-	err := c.d.Erase(filename)
-	if err != nil {
+	if err := c.d.Erase(filename); err != nil {
 		log.Printf("Failed to delete %v from cache:", key, err)
 		return
 	}
@@ -58,6 +60,9 @@ func (c *Cache) Delete(key string) {
 
 func keyToFilename(key string) string {
 	hash := sha1.New()
-	io.WriteString(hash, key)
+	if _, err := io.WriteString(hash, key); err != nil {
+		log.Printf("Failed to generate cache filename from key: %v", err)
+		return ""
+	}
 	return hex.EncodeToString(hash.Sum(nil))
 }
