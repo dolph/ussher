@@ -93,7 +93,11 @@ func (c *Client) GetGHE(ghe GithubEnterprise) []string {
 		}
 		c.cache.Set(url, bodyBytes)
 		var keys []GHEKey
-		json.Unmarshal(bodyBytes, &keys)
+		if err := json.Unmarshal(bodyBytes, &keys); err != nil {
+			log.Printf("Failed to decode JSON from %v: %v", url, err)
+			return make([]string, 0)
+		}
+
 		return GHEKeysToKeys(keys)
 	} else {
 		log.Fatal("HTTP ", resp.StatusCode, ": ", url)
