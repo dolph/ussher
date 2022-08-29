@@ -22,16 +22,17 @@ type Config struct {
 	Sources []Source `yaml:"sources"`
 }
 
-func (c *Config) Load(username string) *Config {
+func (c *Config) Load(username string) {
 	path := "/home/" + username + "/.ssh/authorized_keys.yml"
 	yamlFile, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Printf("ioutil read %v ", err)
+		log.Printf("Failed to %v ", err)
+		return
 	}
 	err = yaml.Unmarshal(yamlFile, c)
 	if err != nil {
-		log.Fatalf("yaml unmarshal: %v", err)
+		log.Printf("Failed to parse as YAML: %v", err)
+		return
 	}
 	log.Printf("Loaded configuration from %v", path)
-	return c
 }
