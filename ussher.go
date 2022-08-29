@@ -21,6 +21,7 @@ func initLog() {
 }
 
 func main() {
+	initLog()
 	securityCheck()
 	if len(os.Args) != 2 {
 		log.Fatal("usage: ussher <username>")
