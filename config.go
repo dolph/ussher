@@ -1,8 +1,8 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -24,7 +24,7 @@ type Config struct {
 
 func (c *Config) Load(username string) {
 	path := "/home/" + username + "/.ssh/authorized_keys.yml"
-	yamlFile, err := ioutil.ReadFile(path)
+	yamlFile, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("Failed to %v ", err)
 		return
