@@ -32,7 +32,7 @@ func Run(c *Config) {
 	var keys []string
 	for results := range keyChan {
 		for _, k := range results {
-			keys = append(keys, k)
+			append(keys, k)
 			fmt.Println(k)
 		}
 	}
