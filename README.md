@@ -20,7 +20,9 @@ management provider.
 
 ## Configuration
 
-`~/.ssh/authorized_keys.yml`:
+`opt/ussher` contains configuration files for each user it supports. For example, to allow me to SSH to your host as root, you would use:
+
+`/opt/ussher/root.yml`:
 
 ```yaml
 urls:

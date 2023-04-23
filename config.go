@@ -23,7 +23,7 @@ type Config struct {
 }
 
 func (c *Config) Load(username string) {
-	path := "/home/" + username + "/.ssh/authorized_keys.yml"
+	path := "/opt/ussher/" + username + ".yml"
 	yamlFile, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("Failed to %v ", err)
