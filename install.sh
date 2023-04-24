@@ -27,6 +27,8 @@ sudo chown ussher:ussher /var/cache/ussher
 sudo mkdir --parents --mode=0700 /var/log/ussher
 sudo chown ussher:ussher /var/log/ussher
 
-# Update sshd configuration
+# Update sshd configuration, validate, and apply
 sudo sed -i -E "s~^#?AuthorizedKeysCommand .*~AuthorizedKeysCommand /usr/local/bin/ussher~" /etc/ssh/sshd_config
 sudo sed -i -E "s~^#?AuthorizedKeysCommandUser .*~AuthorizedKeysCommandUser ussher~" /etc/ssh/sshd_config
+sudo sshd -t
+sudo systemctl restart sshd
