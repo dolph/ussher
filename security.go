@@ -17,14 +17,14 @@ func isRunningAsRoot() bool {
 // - Reading arbitrary files on the host
 // - Log injection
 func isValidLinuxAccountName(name string) bool {
-	// Check if the input string matches the allowed character pattern
-	var validNamePattern = regexp.MustCompile("^[a-z_][a-z0-9_-]*$")
-	if !validNamePattern.MatchString(name) {
+	// Check if the input string is within the allowed length
+	if len(name) > 32 {
 		return false
 	}
 
-	// Check if the input string is within the allowed length
-	if len(name) > 32 {
+	// Check if the input string matches the allowed character pattern
+	var validNamePattern = regexp.MustCompile("^[a-z_][a-z0-9_-]*$")
+	if !validNamePattern.MatchString(name) {
 		return false
 	}
 
