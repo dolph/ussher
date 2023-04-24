@@ -20,14 +20,35 @@ management provider.
 
 ## Configuration
 
-`opt/ussher` contains configuration files for each user it supports. For example, to allow me to SSH to your host as root, you would use:
-
-`/opt/ussher/root.yml`:
+`/opt/ussher` contains configuration files for each user it supports. For example, to allow @dolph to SSH to your host as root (but, _don't_), you would use `/opt/ussher/root.yml`:
 
 ```yaml
 urls:
 - https://github.com/dolph.keys
 ```
+
+## How it works
+
+`ussher` provides a fallback mechanism for statically-defined `authorized_keys`
+files, such as when `authorized_keys` needs to be frequently updated or simply
+defined at the moment of authorization.
+
+1. When you `ssh $USER@$HOSTNAME`, `sshd` first reads something like
+   `/home/.ssh/authorized_keys` to authenticate incoming SSH connections. If
+   `authorized_keys` contains a public key that matches the incoming
+   connection, then the connection attempt proceeds normally.
+
+1. If that file does not exist or does not contain a public key for the
+   incoming connection, `sshd` will invoke `AuthorizedKeysCommand` as
+   `AuthorizedKeysCommandUser`. The `AuthorizedKeysCommand` (`ussher`, in this
+   case), is responsible for returning a list of authorized public keys, which
+   `sshd` then uses to validate the incoming connection.
+
+1. When invoked, `ussher` sources authorized keys from any number of remote
+   sources, such as a static text file or more commonly something like
+   `https://github.com/{username}.keys`. `ussher` then returns a single set of
+   authorized keys to `sshd` which are used to validate the incoming
+   connection.
 
 ## Recommended installation & usage
 
