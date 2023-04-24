@@ -5,23 +5,7 @@ import (
 	"os"
 )
 
-func initLog() {
-	file, err1 := os.OpenFile("/var/log/ussher/ussher.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err1 != nil {
-		file, err2 := os.OpenFile("ussher.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		log.SetOutput(file)
-		log.Print(err1)
-		if err2 != nil {
-			log.Print(err2)
-		}
-	}
-
-	log.SetOutput(file)
-}
-
 func main() {
-	initLog()
-
 	// Refuse to run as root
 	if isRunningAsRoot() {
 		log.Fatal("Refusing to run as root")
