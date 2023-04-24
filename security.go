@@ -8,7 +8,7 @@ import (
 
 // Return true if ussher is running as the root user, which would violate
 // the principle of least-privilege.
-func runningAsRoot() {
+func isRunningAsRoot() bool {
 	return os.Getuid() == 0
 }
 

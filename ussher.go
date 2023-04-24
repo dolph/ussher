@@ -23,7 +23,7 @@ func main() {
 	initLog()
 
 	// Refuse to run as root
-	if runningAsRoot() {
+	if isRunningAsRoot() {
 		log.Fatal("Refusing to run as root")
 	}
 
