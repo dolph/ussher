@@ -30,7 +30,7 @@ func isValidLinuxAccountName(name string) bool {
 
 	// Check if the input string is already an existing user account on the host
 	_, err := user.Lookup(name)
-	if err == nil {
+	if err != nil {
 		return false
 	}
 
