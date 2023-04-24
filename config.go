@@ -26,7 +26,7 @@ func (c *Config) Load(username string) {
 	// `username` is validated at this point to be a valid Linux username, so
 	// it's safe to load this configuration file without the risk of loading
 	// arbitrary paths.
-	path := "/opt/ussher/" + username + ".yml"
+	path := "/etc/ussher/" + username + ".yml"
 	yamlFile, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("Failed to %v ", err)

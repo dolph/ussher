@@ -15,8 +15,7 @@ fi
 sudo install -o root -g ussher -m 0750 ussher /usr/local/bin/ussher
 
 # Create a configuration directory
-sudo mkdir --parents /opt/ussher
-sudo chown -R ussher:ussher /opt/ussher
+sudo mkdir --parents /etc/ussher
 
 # Create a cache directory if one does not exist
 sudo mkdir --parents /var/cache
