@@ -59,6 +59,6 @@ func main() {
 	log.Print("Sourcing authorized_keys for ", username)
 
 	var c Config
-	c.Load(username)
+	c.LoadConfigByUser(username)
 	Run(&c)
 }

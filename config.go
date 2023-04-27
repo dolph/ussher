@@ -22,11 +22,14 @@ type Config struct {
 	Sources []Source `yaml:"sources"`
 }
 
-func (c *Config) Load(username string) {
+func (c *Config) LoadConfigByUser(username string) {
 	// `username` is validated at this point to be a valid Linux username, so
 	// it's safe to load this configuration file without the risk of loading
 	// arbitrary paths.
-	path := "/etc/ussher/" + username + ".yml"
+	c.LoadConfigByPath("/etc/ussher/" + username + ".yml")
+}
+
+func (c *Config) LoadConfigByPath(path string) {
 	yamlFile, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("Failed to %v ", err)
