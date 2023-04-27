@@ -4,9 +4,6 @@ set -e
 # Vet
 go vet
 
-# Fetch dependencies
-go get
-
 # Build
 GIT_COMMIT="$(git rev-parse --short $(git rev-list -1 HEAD))"
 GIT_TAG="$(git tag --points-at HEAD)"
