@@ -1,14 +1,40 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/user"
 	"regexp"
 )
 
 // Return true if ussher's binary is unnecessarily writable.
-func isRunningWritable() bool {
-	// TODO
+func isExecutableWritable() bool {
+	executablePath, err := os.Executable()
+	if err != nil {
+		fmt.Printf("Failed to get a path to ussher executable: %v", err)
+		return true
+	}
+
+	fileInfo, err := os.Stat(executablePath)
+	if err != nil {
+		fmt.Printf("Failed to stat ussher executable: %v", err)
+		return true
+	}
+
+	fileMode := fileInfo.Mode()
+
+	// Check for group writable
+	if fileMode&(1<<(uint(7))) != 0 {
+		fmt.Print("ussher binary is group writable")
+		return true
+	}
+
+	// Check for world writable
+	if fileMode&(1<<(uint(9))) != 0 {
+		fmt.Print("ussher binary is world writable")
+		return true
+	}
+
 	return false
 }
 

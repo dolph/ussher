@@ -133,6 +133,17 @@ sudo chown ussher:ussher /var/log/ussher
 
 `ussher` tries to ensure it can produce file-based logging output for auditing purposes, and will fallback to the current working directory if `/var/log/ussher` is not writable. The best solution is to ensure `/var/log/ussher` is writable (see previous troubleshooting issue).
 
+### `Refusing to run due to permissions issue on the ussher executable`
+
+`ussher` tries to ensure that its own binary is not susceptible to manipulation by unauthorized users. This error may be accompanied by a more specific error in stdout.
+
+Possible solutions include:
+
+```bash
+sudo chmod g-w /usr/local/bin/ussher
+sudo chmod o-w /usr/local/bin/ussher
+```
+
 ### `usage: ussher <username>`
 
 Per the `sshd_config` man page:

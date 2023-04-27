@@ -26,8 +26,8 @@ func initLog() {
 
 func main() {
 	// Security sanity checks
-	if isRunningWritable() {
-		log.Fatal("Refusing to run unnecessarily writable binary")
+	if isExecutableWritable() {
+		log.Fatal("Refusing to run due to permissions issue on the ussher executable")
 	}
 	if isRunningAsRoot() {
 		log.Fatal("Refusing to run as root")
