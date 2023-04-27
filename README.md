@@ -18,20 +18,12 @@ authenticate a user, `sshd` invokes `ussher` to provide additional,
 remotely-sourced keys, such as from Github or another identity and access
 management provider.
 
-## Configuration
-
-`/opt/ussher` contains configuration files for each user it supports. For example, to allow @dolph to SSH to your host as root (but, _don't_), you would use `/opt/ussher/root.yml`:
-
-```yaml
-urls:
-- https://github.com/dolph.keys
-```
-
 ## How it works
 
 `ussher` provides a fallback mechanism for statically-defined `authorized_keys`
-files, such as when `authorized_keys` needs to be frequently updated or simply
-defined at the moment of authorization.
+files, such as when `authorized_keys` needs to be frequently updated, composed
+from a large number of sources, or simply defined at the moment of
+authorization.
 
 1. When you `ssh $USER@$HOSTNAME`, `sshd` first reads something like
    `/home/.ssh/authorized_keys` to authenticate incoming SSH connections. If
@@ -55,18 +47,22 @@ defined at the moment of authorization.
 1. Create a dedicated user and group to run `ussher`, named `ussher`:
 
    ```bash
-   sudo useradd --system --user-group ussher
+   sudo adduser --system --user-group ussher
    ```
 
-2. Install the `ussher` binary to `/usr/sbin/ussher`.
+2. Install the `ussher` binary: to `/usr/local/bin`.
 
    ```bash
-   sudo cp ussher /usr/bin/ussher
-   sudo chown root:root /usr/bin/ussher
-   sudo chmod 0700 /usr/bin/ussher
+   sudo install -o root -g ussher -m 0750 ussher /usr/local/bin/ussher
    ```
 
-3. Create a directory for caching remotely-sourced data.
+3. Create a configuration directory.
+
+   ```bash
+   sudo mkdir --parents /etc/ussher
+   ```
+
+4. Create a directory for caching remotely-sourced data.
 
    ```bash
    sudo mkdir --parents /var/cache
@@ -74,14 +70,14 @@ defined at the moment of authorization.
    sudo chown ussher:ussher /var/cache/ussher
    ```
 
-4. Create a directory for logging.
+5. Create a directory for logging.
 
    ```bash
    sudo mkdir --parents --mode=0700 /var/log/ussher
    sudo chown ussher:ussher /var/log/ussher
    ```
 
-5. Configure `sshd` to invoke `ussher`. Add the following lines to
+6. Configure `sshd` to invoke `ussher`. Add the following lines to
    `/etc/ssh/sshd_config`:
 
    ```
@@ -89,8 +85,27 @@ defined at the moment of authorization.
    AuthorizedKeysCommandUser ussher
    ```
 
-   Restart `sshd`, for example:
+   You can script this with:
 
    ```bash
+   sudo sed -i -E "s~^#?AuthorizedKeysCommand .*~AuthorizedKeysCommand /usr/local/bin/ussher~" /etc/ssh/sshd_config
+   sudo sed -i -E "s~^#?AuthorizedKeysCommandUser .*~AuthorizedKeysCommandUser ussher~" /etc/ssh/sshd_config
+   ```
+
+   Validate sshd's new configuration and restart `sshd`, for example:
+
+   ```bash
+   sudo sshd -t
    sudo systemctl restart sshd
    ```
+
+## Configuration
+
+`/etc/ussher` contains configuration files for each user it supports. For
+example, to allow @dolph to SSH to your host as root (but, you know, _don't_),
+you would configure `/etc/ussher/root.yml` using:
+
+```yaml
+sources:
+- url: https://github.com/dolph.keys
+```
