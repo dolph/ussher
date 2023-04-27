@@ -12,7 +12,7 @@ When `~/.ssh/authorized_keys` does not contain the keys required to authenticate
 
 `ussher` provides a fallback mechanism for statically-defined `authorized_keys` files, such as when `authorized_keys` needs to be frequently updated, composed from a large number of sources, or simply defined at the moment of authorization.
 
-1. When you `ssh $USER@$HOSTNAME`, `sshd` first reads something like `/home/.ssh/authorized_keys` to authenticate incoming SSH connections. If `authorized_keys` contains a public key that matches the incoming connection, then the connection attempt proceeds normally.
+1. When you `ssh $USER@$HOSTNAME`, `sshd` first reads something like `/home/$USER/.ssh/authorized_keys` to authenticate incoming SSH connections. If `authorized_keys` contains a public key that matches the incoming connection, then the connection attempt proceeds normally.
 
 1. If that file does not exist or does not contain a public key for the incoming connection, `sshd` will invoke `AuthorizedKeysCommand` as `AuthorizedKeysCommandUser`. The `AuthorizedKeysCommand` (`ussher`, in this case), is responsible for returning a list of authorized public keys, which `sshd` then uses to validate the incoming connection.
 
