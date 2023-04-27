@@ -81,7 +81,7 @@ func isFileWorldWritable(filePath string) (bool, error) {
 	permissions := fileInfo.Mode().Perm()
 
 	// Check if the world writable bit is set (i.e., 0002)
-	if permissions&os.ModePerm&0o0002 != 0 {
+	if permissions&os.ModePerm&0002 != 0 {
 		return true, nil
 	}
 
