@@ -29,3 +29,5 @@ go build \
 
 # Test
 go test -cover -v ./...
+
+./ussher --version

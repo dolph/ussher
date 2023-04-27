@@ -25,6 +25,13 @@ func initLog() {
 }
 
 func main() {
+	// Support `ussher --version` to print versioning info about the executable
+	// before proceeding to security-hardening checks.
+	if os.Args[1] == "--version" {
+		PrintVersion()
+		return
+	}
+
 	// Security sanity checks
 	if isExecutableWritable() {
 		log.Fatal("Refusing to run due to permissions issue on the ussher executable")
