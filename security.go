@@ -6,6 +6,12 @@ import (
 	"regexp"
 )
 
+// Return true if ussher's binary is world writable.
+func isRunningWorldWritable() bool {
+	// TODO
+	return false
+}
+
 // Return true if ussher is running as the root user, which would violate
 // the principle of least-privilege.
 func isRunningAsRoot() bool {
@@ -16,7 +22,7 @@ func isRunningAsRoot() bool {
 // This prevents security issues such as:
 // - Reading arbitrary files on the host
 // - Log injection
-func isValidLinuxAccountName(name string) bool {
+func isValidUser(name string) bool {
 	// Check if the input string is within the allowed length
 	if len(name) > 32 {
 		return false

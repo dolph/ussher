@@ -6,7 +6,10 @@ import (
 )
 
 func main() {
-	// Refuse to run as root
+	// Security sanity checks
+	if isRunningWorldWritable() {
+		log.Fatal("Refusing to run world writable binary")
+	}
 	if isRunningAsRoot() {
 		log.Fatal("Refusing to run as root")
 	}
@@ -18,8 +21,8 @@ func main() {
 
 	// Check if the input username is valid
 	username := os.Args[1]
-	if !isValidLinuxAccountName(username) {
-		log.Fatal("Invalid username")
+	if !isValidUser(username) {
+		log.Fatal("User not found")
 	}
 
 	// At this point, we know that the input username is valid and safe to use.
