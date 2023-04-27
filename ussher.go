@@ -26,8 +26,8 @@ func initLog() {
 
 func main() {
 	// Security sanity checks
-	if isRunningWorldWritable() {
-		log.Fatal("Refusing to run world writable binary")
+	if isRunningWritable() {
+		log.Fatal("Refusing to run unnecessarily writable binary")
 	}
 	if isRunningAsRoot() {
 		log.Fatal("Refusing to run as root")

@@ -6,8 +6,8 @@ import (
 	"regexp"
 )
 
-// Return true if ussher's binary is world writable.
-func isRunningWorldWritable() bool {
+// Return true if ussher's binary is unnecessarily writable.
+func isRunningWritable() bool {
 	// TODO
 	return false
 }

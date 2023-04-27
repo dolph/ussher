@@ -109,3 +109,56 @@ you would configure `/etc/ussher/root.yml` using:
 sources:
 - url: https://github.com/dolph.keys
 ```
+
+## Troubleshooting
+
+### `Refusing to run unnecessarily writable binary`
+
+Per the `sshd` man page:
+
+> The program must be owned by root, not writable by group or others and specified by an absolute path.
+
+`ussher` checks to ensure it's own binary is not unnecessarily writable at startup. If it is, a malicious user could remove this check or return any set of keys to sshd, which may be difficult to detect.
+
+Ensure the file mode is similar to:
+
+```
+$ ls -l /usr/local/bin/ussher
+-rwxr-x---. 1 root ussher 7823184 Apr 27 11:10 /usr/local/bin/ussher*
+```
+
+For example:
+
+```bash
+sudo chmod g-w /usr/local/bin/ussher
+sudo chmod o-w /usr/local/bin/ussher
+```
+
+... but the binary may have been tainted. Verify it's checksum.
+
+### `Refusing to run as root`
+
+`ussher` checks to ensure it's not unnecessarily _running_ as root.
+
+Ensure `sshd_config` specifies a non-root user:
+
+```
+AuthorizedKeysCommandUser ussher
+```
+
+### `Failed to write to /var/log/ussher`
+
+`ussher` tries to ensure it can produce file-based logging output for auditing purposes. It's first preference is for `/var/log/ussher` which requires:
+
+```bash
+sudo mkdir --parents --mode=0700 /var/log/ussher
+sudo chown ussher:ussher /var/log/ussher
+```
+
+### `Refusing to run without being able to log to /var/log/ussher/ or current working directory`
+
+`ussher` tries to ensure it can produce file-based logging output for auditing purposes, and will fallback to the current working directory if `/var/log/ussher` is not writable. The best solution is to ensure `/var/log/ussher` is writable (see previous troubleshooting issue).
+
+### `usage: ussher <username>`
+
+### `User not found`
