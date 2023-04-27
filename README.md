@@ -1,46 +1,22 @@
 # `ussher`
 
-`ussher` aims to provide a backend for `sshd`'s [`AuthorizedKeysCommand`
-option](https://man.openbsd.org/sshd_config.5#AuthorizedKeysCommand), by
-remotely sourcing SSH `authorized_keys`. In short:
+`ussher` aims to provide a backend for `sshd`'s [`AuthorizedKeysCommand` option](https://man.openbsd.org/sshd_config.5#AuthorizedKeysCommand), by remotely sourcing SSH `authorized_keys`. In short:
 
-> `AuthorizedKeysCommand`: Specifies a program to be used to look up the user's
-  public keys. The program must be owned by root, not writable by group or
-  others and specified by an absolute path.
+> `AuthorizedKeysCommand`: Specifies a program to be used to look up the user's public keys. The program must be owned by root, not writable by group or others and specified by an absolute path.
 >
-> The program should produce on standard output zero or more lines of
-  authorized_keys output. `AuthorizedKeysCommand` is tried after the usual
-  `AuthorizedKeysFile` files and will not be executed if a matching key is
-  found there. By default, no `AuthorizedKeysCommand` is run.
+> The program should produce on standard output zero or more lines of authorized_keys output. `AuthorizedKeysCommand` is tried after the usual `AuthorizedKeysFile` files and will not be executed if a matching key is found there. By default, no `AuthorizedKeysCommand` is run.
 
-When `~/.ssh/authorized_keys` does not contain the keys required to
-authenticate a user, `sshd` invokes `ussher` to provide additional,
-remotely-sourced keys, such as from Github or another identity and access
-management provider.
+When `~/.ssh/authorized_keys` does not contain the keys required to authenticate a user, `sshd` invokes `ussher` to provide additional, remotely-sourced keys, such as from Github or another identity and access management provider.
 
 ## How it works
 
-`ussher` provides a fallback mechanism for statically-defined `authorized_keys`
-files, such as when `authorized_keys` needs to be frequently updated, composed
-from a large number of sources, or simply defined at the moment of
-authorization.
+`ussher` provides a fallback mechanism for statically-defined `authorized_keys` files, such as when `authorized_keys` needs to be frequently updated, composed from a large number of sources, or simply defined at the moment of authorization.
 
-1. When you `ssh $USER@$HOSTNAME`, `sshd` first reads something like
-   `/home/.ssh/authorized_keys` to authenticate incoming SSH connections. If
-   `authorized_keys` contains a public key that matches the incoming
-   connection, then the connection attempt proceeds normally.
+1. When you `ssh $USER@$HOSTNAME`, `sshd` first reads something like `/home/.ssh/authorized_keys` to authenticate incoming SSH connections. If `authorized_keys` contains a public key that matches the incoming connection, then the connection attempt proceeds normally.
 
-1. If that file does not exist or does not contain a public key for the
-   incoming connection, `sshd` will invoke `AuthorizedKeysCommand` as
-   `AuthorizedKeysCommandUser`. The `AuthorizedKeysCommand` (`ussher`, in this
-   case), is responsible for returning a list of authorized public keys, which
-   `sshd` then uses to validate the incoming connection.
+1. If that file does not exist or does not contain a public key for the incoming connection, `sshd` will invoke `AuthorizedKeysCommand` as `AuthorizedKeysCommandUser`. The `AuthorizedKeysCommand` (`ussher`, in this case), is responsible for returning a list of authorized public keys, which `sshd` then uses to validate the incoming connection.
 
-1. When invoked, `ussher` sources authorized keys from any number of remote
-   sources, such as a static text file or more commonly something like
-   `https://github.com/{username}.keys`. `ussher` then returns a single set of
-   authorized keys to `sshd` which are used to validate the incoming
-   connection.
+1. When invoked, `ussher` sources authorized keys from any number of remote sources, such as a static text file or more commonly something like `https://github.com/{username}.keys`. `ussher` then returns a single set of authorized keys to `sshd` which are used to validate the incoming connection.
 
 ## Recommended installation & usage
 
@@ -81,7 +57,7 @@ authorization.
    `/etc/ssh/sshd_config`:
 
    ```
-   AuthorizedKeysCommand /usr/bin/ussher
+   AuthorizedKeysCommand /usr/local/bin/ussher
    AuthorizedKeysCommandUser ussher
    ```
 
@@ -101,9 +77,7 @@ authorization.
 
 ## Configuration
 
-`/etc/ussher` contains configuration files for each user it supports. For
-example, to allow @dolph to SSH to your host as root (but, you know, _don't_),
-you would configure `/etc/ussher/root.yml` using:
+`/etc/ussher` contains configuration files for each user it supports. For example, to allow @dolph to SSH to your host as root (but, you know, _don't_), you would configure `/etc/ussher/root.yml` using:
 
 ```yaml
 sources:
@@ -161,4 +135,18 @@ sudo chown ussher:ussher /var/log/ussher
 
 ### `usage: ussher <username>`
 
+Per the `sshd_config` man page:
+
+> Arguments to AuthorizedKeysCommand accept the tokens described in the TOKENS section. If no arguments are specified then the username of the target user is used.
+
+`ussher` only expects the default configuration from sshd (the username of the target user).
+
+Ensure `sshd_config` only specifies the absolute path to `ussher`, without any additional arguments:
+
+```
+AuthorizedKeysCommand /usr/local/bin/ussher
+```
+
 ### `User not found`
+
+The user specified to `ussher` is either not a valid Linux username or not an existing user on the host. Double check the username specified to `ussher` as well as the `AuthorizedKeysCommand` value in `/etc/ssh/sshd_config`.
