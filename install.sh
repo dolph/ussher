@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-# Build a new binary if one does not exist
+# Download the latest binary if one does not exist locally
 if ! [ -f ussher ]; then
-    build.sh
+    curl -L -o https://github.com/dolph/ussher/releases/latest/download/ussher
 fi
 
 # Create a user if one does not exist
