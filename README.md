@@ -20,25 +20,27 @@ When `~/.ssh/authorized_keys` does not contain the keys required to authenticate
 
 ## Recommended installation & usage
 
-1. Create a dedicated user and group to run `ussher`, named `ussher`:
+1. Download the latest release of `ussher` from [github.com/dolph/ussher](https://github.com/dolph/ussher/releases/latest).
+
+2. Create a dedicated user and group to run `ussher`, named `ussher`:
 
    ```bash
    sudo adduser --system --user-group ussher
    ```
 
-2. Install the `ussher` binary: to `/usr/local/bin`.
+3. Install the `ussher` binary: to `/usr/local/bin`.
 
    ```bash
    sudo install -o root -g ussher -m 0750 ussher /usr/local/bin/ussher
    ```
 
-3. Create a configuration directory.
+4. Create a configuration directory.
 
    ```bash
    sudo mkdir --parents /etc/ussher
    ```
 
-4. Create a directory for caching remotely-sourced data.
+5. Create a directory for caching remotely-sourced data.
 
    ```bash
    sudo mkdir --parents /var/cache
@@ -46,14 +48,14 @@ When `~/.ssh/authorized_keys` does not contain the keys required to authenticate
    sudo chown ussher:ussher /var/cache/ussher
    ```
 
-5. Create a directory for logging.
+6. Create a directory for logging.
 
    ```bash
    sudo mkdir --parents --mode=0700 /var/log/ussher
    sudo chown ussher:ussher /var/log/ussher
    ```
 
-6. Configure `sshd` to invoke `ussher`. Add the following lines to
+7. Configure `sshd` to invoke `ussher`. Add the following lines to
    `/etc/ssh/sshd_config`:
 
    ```
