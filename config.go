@@ -14,8 +14,7 @@ type GithubEnterprise struct {
 }
 
 type Source struct {
-	URL string           `yaml:"url"`
-	GHE GithubEnterprise `yaml:"github_enterprise"`
+	URL string `yaml:"url"`
 }
 
 type Config struct {

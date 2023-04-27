@@ -26,11 +26,7 @@ func TestConfigLoad(t *testing.T) {
 	// Test case: valid YAML content
 	validYamlContent := `
 sources:
-  - url: "https://example.com/keys"
-  - github_enterprise:
-      api_hostname: "github.example.com"
-      user: "testuser"
-      token: "testtoken"
+- url: https://example.com/keys
 `
 	tmpFile, cleanup := createTempConfig(t, validYamlContent)
 	defer cleanup()
@@ -44,13 +40,6 @@ sources:
 
 	expectedSources := []Source{
 		{URL: "https://example.com/keys"},
-		{
-			GHE: GithubEnterprise{
-				Hostname: "github.example.com",
-				Username: "testuser",
-				Token:    "testtoken",
-			},
-		},
 	}
 
 	if len(config.Sources) != len(expectedSources) {
@@ -63,14 +52,12 @@ sources:
 		}
 	}
 
-	// Test case: invalid YAML content
+	// Test case: invalid YAML content using a dict of sources instead of a
+	// list
 	invalidYamlContent := `
+---
 sources:
-  - url: "https://example.com/keys"
-  - github_enterprise:
-      api_hostname: "github.example.com"
-      user: "testuser"
-      token: "testtoken
+  url: https://example.com/keys
 `
 	tmpFile, cleanup = createTempConfig(t, invalidYamlContent)
 	defer cleanup()
@@ -83,6 +70,6 @@ sources:
 	config.LoadConfigByPath(tmpFilePath)
 
 	if len(config.Sources) != 0 {
-		t.Errorf("Expected 0 sources, got %d", len(config.Sources))
+		t.Errorf("Expected 0 sources, got %d: %v", len(config.Sources), config.Sources[0])
 	}
 }

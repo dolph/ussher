@@ -16,8 +16,6 @@ func Run(c *Config) {
 			defer wg.Done()
 			if source.URL != "" {
 				keyChan <- client.GetURL(source.URL)
-			} else if source.GHE.Hostname != "" {
-				keyChan <- client.GetGHE(source.GHE)
 			}
 		}(source)
 	}
