@@ -6,14 +6,19 @@ import (
 )
 
 func initLog() {
+	// Attempt to write a log file to a standard location
 	file, err1 := os.OpenFile("/var/log/ussher/ussher.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err1 != nil {
+		// If we can't write to a standard location, then try to write to the current working directory
 		file, err2 := os.OpenFile("ussher.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		log.SetOutput(file)
-		log.Print(err1)
 		if err2 != nil {
-			log.Print(err2)
+			// If we can't produce real log files, then use stdout and abort
+			log.Fatal("Refusing to run without being able to log to /var/log/ussher/ (", err1, ") or current working directory (", err2, ")")
 		}
+
+		// At least we can log to the current working directory
+		log.SetOutput(file)
+		log.Print("Failed to write to /var/log/ussher: ", err1)
 	}
 
 	log.SetOutput(file)
