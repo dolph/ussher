@@ -163,3 +163,7 @@ AuthorizedKeysCommand /usr/local/bin/ussher
 ### `User not found`
 
 The user specified to `ussher` is either not a valid Linux username or not an existing user on the host. Double check the username specified to `ussher` as well as the `AuthorizedKeysCommand` value in `/etc/ssh/sshd_config`.
+
+## License
+
+Apache 2.0
