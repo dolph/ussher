@@ -21,16 +21,16 @@ func isExecutableWritable() bool {
 		return true
 	}
 
-	fileMode := fileInfo.Mode()
+	mode := fileInfo.Mode()
 
 	// Check for group writable
-	if mode&os.ModePerm&os.ModeGroup&os.ModeWrite != 0 {
+	if mode&0020 != 0 {
 		fmt.Println("ussher binary is group writable")
 		return true
 	}
 
 	// Check for world writable
-	if mode&os.ModePerm&os.ModeOther&os.ModeWrite != 0 {
+	if mode&0002 != 0 {
 		fmt.Println("ussher binary is world writable")
 		return true
 	}
