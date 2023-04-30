@@ -11,27 +11,27 @@ import (
 func isExecutableWritable() bool {
 	executablePath, err := os.Executable()
 	if err != nil {
-		fmt.Printf("Failed to get a path to ussher executable: %v", err)
+		fmt.Printf("Failed to get a path to ussher executable: %v\n", err)
 		return true
 	}
 
 	fileInfo, err := os.Stat(executablePath)
 	if err != nil {
-		fmt.Printf("Failed to stat ussher executable: %v", err)
+		fmt.Printf("Failed to stat ussher executable: %v\n", err)
 		return true
 	}
 
 	fileMode := fileInfo.Mode()
 
 	// Check for group writable
-	if fileMode&(1<<(uint(7))) != 0 {
-		fmt.Print("ussher binary is group writable")
+	if mode&os.ModePerm&os.ModeGroup&os.ModeWrite != 0 {
+		fmt.Println("ussher binary is group writable")
 		return true
 	}
 
 	// Check for world writable
-	if fileMode&(1<<(uint(9))) != 0 {
-		fmt.Print("ussher binary is world writable")
+	if mode&os.ModePerm&os.ModeOther&os.ModeWrite != 0 {
+		fmt.Println("ussher binary is world writable")
 		return true
 	}
 
