@@ -27,8 +27,32 @@ jobs:
     - name: Install shellcheck
       run: sudo apt-get update && sudo apt-get install -y shellcheck
 
-    - name: Lint shell scripts
-      run: shellcheck install.sh build.sh
+    - name: Find and lint shell scripts
+      shell: bash
+      run: |
+        set -euo pipefail
+        # Lint every tracked shell script in the repo, regardless of directory:
+        #   - any file with a known shell extension
+        #   - any file whose first line is a shell shebang (sh/bash/dash/ksh/zsh)
+        # Using `git ls-files` keeps us scoped to tracked content and naturally
+        # picks up newly added or renamed scripts on the PR that introduces them.
+        mapfile -t scripts < <(
+          {
+            git ls-files -- '*.sh' '*.bash' '*.ksh' '*.zsh'
+            while IFS= read -r f; do
+              [ -f "$f" ] || continue
+              IFS= read -r first <"$f" 2>/dev/null || continue
+              [[ "$first" =~ ^#!.*sh([[:space:]]|$) ]] && printf '%s\n' "$f"
+            done < <(git ls-files)
+          } | sort -u
+        )
+        if [ "${#scripts[@]}" -eq 0 ]; then
+          echo "No shell scripts found."
+          exit 0
+        fi
+        printf 'Linting %d shell script(s):\n' "${#scripts[@]}"
+        printf '  %s\n' "${scripts[@]}"
+        shellcheck -- "${scripts[@]}"
 
   build:
     runs-on: ubuntu-latest
