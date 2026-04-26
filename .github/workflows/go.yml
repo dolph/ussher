@@ -33,7 +33,6 @@ jobs:
         # Lint every tracked .sh file, regardless of directory. `git ls-files`
         # keeps us scoped to tracked content and picks up newly added or
         # renamed scripts on the PR that introduces them.
-        echo "Discovered shell scripts:"
         git ls-files -- '*.sh' | sed 's/^/  /'
         git ls-files -z -- '*.sh' | xargs -0 -r shellcheck --
 
