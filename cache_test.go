@@ -5,10 +5,10 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestCache(t *testing.T) {
-	// Create a temporary directory for the cache
 	tempDir, err := ioutil.TempDir("", "cache-test")
 	if err != nil {
 		t.Fatal("Failed to create temporary directory for cache:", err)
@@ -20,30 +20,28 @@ func TestCache(t *testing.T) {
 	testKey := "test_key"
 	testValue := []byte("test_value")
 
-	// Test the Get method on an empty cache
-	value, ok := cache.Get(testKey)
-	if ok {
+	if _, _, ok := cache.Get(testKey); ok {
 		t.Error("Expected cache miss, got cache hit")
 	}
 
-	// Test the Set method
+	before := time.Now().Add(-time.Second)
 	cache.Set(testKey, testValue)
+	after := time.Now().Add(time.Second)
 
-	// Test the Get method after setting a value
-	value, ok = cache.Get(testKey)
+	value, setAt, ok := cache.Get(testKey)
 	if !ok {
-		t.Error("Expected cache hit, got cache miss")
+		t.Fatal("Expected cache hit, got cache miss")
 	}
 	if !bytes.Equal(value, testValue) {
 		t.Errorf("Expected value %q, got %q", testValue, value)
 	}
+	if setAt.Before(before) || setAt.After(after) {
+		t.Errorf("setAt %v not in [%v, %v]", setAt, before, after)
+	}
 
-	// Test the Delete method
 	cache.Delete(testKey)
 
-	// Test the Get method after deleting a value
-	value, ok = cache.Get(testKey)
-	if ok {
-		t.Error("Expected cache miss, got cache hit")
+	if _, _, ok := cache.Get(testKey); ok {
+		t.Error("Expected cache miss after delete, got cache hit")
 	}
 }

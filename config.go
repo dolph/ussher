@@ -3,9 +3,12 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
+
+const defaultCacheTTL = 5 * time.Minute
 
 type GithubEnterprise struct {
 	Hostname string `yaml:"api_hostname"`
@@ -18,7 +21,24 @@ type Source struct {
 }
 
 type Config struct {
-	Sources []Source `yaml:"sources"`
+	// CacheTTL is parsed by time.ParseDuration ("5m", "30s", "1h"). An empty
+	// or unparseable value falls back to defaultCacheTTL.
+	CacheTTL string   `yaml:"cache_ttl"`
+	Sources  []Source `yaml:"sources"`
+}
+
+// ResolveCacheTTL returns the configured cache TTL, falling back to a sane
+// default when unset or malformed.
+func (c *Config) ResolveCacheTTL() time.Duration {
+	if c.CacheTTL == "" {
+		return defaultCacheTTL
+	}
+	d, err := time.ParseDuration(c.CacheTTL)
+	if err != nil {
+		log.Printf("Invalid cache_ttl %q, falling back to %s: %v", c.CacheTTL, defaultCacheTTL, err)
+		return defaultCacheTTL
+	}
+	return d
 }
 
 func (c *Config) LoadConfigByUser(username string) {
