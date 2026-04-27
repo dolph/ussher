@@ -9,22 +9,31 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type Client struct {
 	http  *http.Client
 	cache *Cache
+	ttl   time.Duration
 }
 
-func NewHTTPClient() *Client {
+func NewHTTPClient(ttl time.Duration) *Client {
 	return &Client{
 		http:  &http.Client{},
 		cache: NewCache("/var/cache/ussher"),
+		ttl:   ttl,
 	}
 }
 
+// fresh reports whether a cached entry written at setAt is still within the
+// configured TTL.
+func (c *Client) fresh(setAt time.Time) bool {
+	return time.Since(setAt) < c.ttl
+}
+
 func (c *Client) GetURL(url string) []string {
-	if cached, ok := c.cache.Get(url); ok {
+	if cached, setAt, ok := c.cache.Get(url); ok && c.fresh(setAt) {
 		return bodyToKeys(cached)
 	}
 
@@ -57,7 +66,7 @@ func (c *Client) GetGHE(ghe GithubEnterprise) []string {
 	url := "https://" + ghe.Hostname + "/users/" + ghe.Username + "/keys"
 
 	/* This will cache responses regardless of the token in context here, which could be a security risk. */
-	if cached, ok := c.cache.Get(url); ok {
+	if cached, setAt, ok := c.cache.Get(url); ok && c.fresh(setAt) {
 		var keys []GHEKey
 		err := json.Unmarshal(cached, &keys)
 		if err != nil {

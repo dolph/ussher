@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func createTempConfig(t *testing.T, content string) (string, func()) {
@@ -71,5 +72,47 @@ sources:
 
 	if len(config.Sources) != 0 {
 		t.Errorf("Expected 0 sources, got %d: %v", len(config.Sources), config.Sources[0])
+	}
+}
+
+func TestResolveCacheTTL(t *testing.T) {
+	cases := []struct {
+		name string
+		raw  string
+		want time.Duration
+	}{
+		{"empty falls back to default", "", defaultCacheTTL},
+		{"unparseable falls back to default", "five minutes", defaultCacheTTL},
+		{"valid seconds", "30s", 30 * time.Second},
+		{"valid minutes", "10m", 10 * time.Minute},
+		{"valid hours", "1h", time.Hour},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := &Config{CacheTTL: tc.raw}
+			if got := c.ResolveCacheTTL(); got != tc.want {
+				t.Errorf("ResolveCacheTTL() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestConfigLoadCacheTTL(t *testing.T) {
+	yamlContent := `
+cache_ttl: 15m
+sources:
+- url: https://example.com/keys
+`
+	tmpFile, cleanup := createTempConfig(t, yamlContent)
+	defer cleanup()
+
+	config := &Config{}
+	config.LoadConfigByPath(tmpFile)
+
+	if config.CacheTTL != "15m" {
+		t.Errorf("Expected CacheTTL %q, got %q", "15m", config.CacheTTL)
+	}
+	if got := config.ResolveCacheTTL(); got != 15*time.Minute {
+		t.Errorf("ResolveCacheTTL() = %v, want %v", got, 15*time.Minute)
 	}
 }

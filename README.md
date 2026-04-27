@@ -86,6 +86,18 @@ sources:
 - url: https://github.com/dolph.keys
 ```
 
+### `cache_ttl`
+
+Responses from each source URL are cached on disk under `/var/cache/ussher` so that frequent SSH attempts don't hammer the upstream. Cached entries expire after `cache_ttl`; once expired, the next login refetches the source. After `cache_ttl` elapses, key revocations on the upstream propagate to this host. Smaller values mean revocations take effect sooner and add upstream load; larger values reduce upstream load and lengthen the window during which a revoked key could still authenticate.
+
+`cache_ttl` accepts any duration string understood by Go's [`time.ParseDuration`](https://pkg.go.dev/time#ParseDuration) — for example `30s`, `5m`, `1h`. The default when unset is `5m`.
+
+```yaml
+cache_ttl: 5m
+sources:
+- url: https://github.com/dolph.keys
+```
+
 ## Troubleshooting
 
 ### `Refusing to run unnecessarily writable binary`
