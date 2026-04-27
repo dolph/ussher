@@ -38,9 +38,9 @@ func (c *Client) GetURL(url string) []string {
 	}
 
 	log.Printf("GET %v", url)
-	resp, err := http.Get(url)
+	resp, err := c.http.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Failed to fetch %v: %v", url, err)
 		return make([]string, 0)
 	}
 	defer resp.Body.Close()
@@ -48,12 +48,13 @@ func (c *Client) GetURL(url string) []string {
 	if resp.StatusCode == http.StatusOK {
 		bodyBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("Failed to read response body from %v: %v", url, err)
 			return make([]string, 0)
 		}
 		c.cache.Set(url, bodyBytes)
 		return bodyToKeys(bodyBytes)
 	}
+	log.Printf("HTTP %d from %v", resp.StatusCode, url)
 	return make([]string, 0)
 }
 
@@ -78,7 +79,7 @@ func (c *Client) GetGHE(ghe GithubEnterprise) []string {
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Fatal("Unable to create new request", err)
+		log.Printf("Failed to build request for %v: %v", url, err)
 		return make([]string, 0)
 	}
 
@@ -89,7 +90,7 @@ func (c *Client) GetGHE(ghe GithubEnterprise) []string {
 	log.Printf("GET %v", url)
 	resp, err := c.http.Do(req)
 	if err != nil {
-		log.Fatal("Request failed", err)
+		log.Printf("Failed to fetch %v: %v", url, err)
 		return make([]string, 0)
 	}
 	defer resp.Body.Close()
@@ -97,7 +98,7 @@ func (c *Client) GetGHE(ghe GithubEnterprise) []string {
 	if resp.StatusCode == http.StatusOK {
 		bodyBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("Failed to read response body from %v: %v", url, err)
 			return make([]string, 0)
 		}
 		c.cache.Set(url, bodyBytes)
@@ -108,9 +109,8 @@ func (c *Client) GetGHE(ghe GithubEnterprise) []string {
 		}
 
 		return GHEKeysToKeys(keys)
-	} else {
-		log.Fatal("HTTP ", resp.StatusCode, ": ", url)
 	}
+	log.Printf("HTTP %d from %v", resp.StatusCode, url)
 	return make([]string, 0)
 }
 
