@@ -184,6 +184,10 @@ AuthorizedKeysCommand /usr/local/bin/ussher
 
 The user specified to `ussher` is either not a valid Linux username or not an existing user on the host. Double check the username specified to `ussher` as well as the `AuthorizedKeysCommand` value in `/etc/ssh/sshd_config`.
 
+## Changelog
+
+See [`CHANGELOG.md`](./CHANGELOG.md) for the per-release history. The project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adheres to [Semantic Versioning](https://semver.org/).
+
 ## License
 
 Apache 2.0
