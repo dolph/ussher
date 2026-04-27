@@ -36,41 +36,77 @@ func validateArgs(args []string) (string, error) {
 	return args[1], nil
 }
 
-func main() {
-	arg, err := validateArgs(os.Args)
+// runDeps wires the side-effecting bits main() depends on (security gates,
+// log setup, the actual fetch loop) so tests can substitute fakes. Only the
+// fields that have side effects or read host state need to be injected;
+// pure helpers like validateArgs are called directly.
+type runDeps struct {
+	executableWritable func() bool
+	runningAsRoot      func() bool
+	initLog            func()
+	validUser          func(name string) bool
+	loadConfig         func(username string, c *Config)
+	runFn              func(*Config)
+}
+
+// defaultDeps wires the production implementations. main uses this; tests
+// supply their own.
+func defaultDeps() runDeps {
+	return runDeps{
+		executableWritable: isExecutableWritable,
+		runningAsRoot:      isRunningAsRoot,
+		initLog:            initLog,
+		validUser:          isValidUser,
+		loadConfig:         func(u string, c *Config) { c.LoadConfigByUser(u) },
+		runFn:              Run,
+	}
+}
+
+// runMain is main's testable body: same gate ordering, but every gate's
+// outcome is observable as an error return rather than a process-killing
+// log.Fatal. main() is the thin wrapper that calls log.Fatal on error.
+func runMain(args []string, d runDeps) error {
+	arg, err := validateArgs(args)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Support `ussher --version` to print versioning info about the executable
 	// before proceeding to security-hardening checks.
 	if arg == "--version" {
 		PrintVersion()
-		return
+		return nil
 	}
 
 	// Security sanity checks
-	if isExecutableWritable() {
-		log.Fatal("Refusing to run due to permissions issue on the ussher executable")
+	if d.executableWritable() {
+		return errors.New("Refusing to run due to permissions issue on the ussher executable")
 	}
-	if isRunningAsRoot() {
-		log.Fatal("Refusing to run as root")
+	if d.runningAsRoot() {
+		return errors.New("Refusing to run as root")
 	}
 
 	// Initialize logging AFTER security checks to ensure we're writing logs as
-	// a non-root user
-	initLog()
+	// a non-root user.
+	d.initLog()
 
-	// Check if the input username is valid
+	// Check if the input username is valid.
 	username := arg
-	if !isValidUser(username) {
-		log.Fatal("User not found")
+	if !d.validUser(username) {
+		return errors.New("User not found")
 	}
 
 	// At this point, we know that the input username is valid and safe to use.
 	log.Print("Sourcing authorized_keys for ", username)
 
 	var c Config
-	c.LoadConfigByUser(username)
-	Run(&c)
+	d.loadConfig(username, &c)
+	d.runFn(&c)
+	return nil
+}
+
+func main() {
+	if err := runMain(os.Args, defaultDeps()); err != nil {
+		log.Fatal(err)
+	}
 }
