@@ -18,9 +18,11 @@ type Client struct {
 	ttl   time.Duration
 }
 
-func NewHTTPClient(ttl time.Duration) *Client {
+func NewHTTPClient(ttl, httpTimeout time.Duration) *Client {
 	return &Client{
-		http:  &http.Client{},
+		http: &http.Client{
+			Timeout: httpTimeout,
+		},
 		cache: NewCache("/var/cache/ussher"),
 		ttl:   ttl,
 	}

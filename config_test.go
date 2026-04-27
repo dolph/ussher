@@ -116,3 +116,45 @@ sources:
 		t.Errorf("ResolveCacheTTL() = %v, want %v", got, 15*time.Minute)
 	}
 }
+
+func TestResolveHTTPTimeout(t *testing.T) {
+	cases := []struct {
+		name string
+		raw  string
+		want time.Duration
+	}{
+		{"empty falls back to default", "", defaultHTTPTimeout},
+		{"unparseable falls back to default", "ten seconds", defaultHTTPTimeout},
+		{"valid milliseconds", "500ms", 500 * time.Millisecond},
+		{"valid seconds", "30s", 30 * time.Second},
+		{"valid minutes", "2m", 2 * time.Minute},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := &Config{HTTPTimeout: tc.raw}
+			if got := c.ResolveHTTPTimeout(); got != tc.want {
+				t.Errorf("ResolveHTTPTimeout() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestConfigLoadHTTPTimeout(t *testing.T) {
+	yamlContent := `
+http_timeout: 5s
+sources:
+- url: https://example.com/keys
+`
+	tmpFile, cleanup := createTempConfig(t, yamlContent)
+	defer cleanup()
+
+	config := &Config{}
+	config.LoadConfigByPath(tmpFile)
+
+	if config.HTTPTimeout != "5s" {
+		t.Errorf("Expected HTTPTimeout %q, got %q", "5s", config.HTTPTimeout)
+	}
+	if got := config.ResolveHTTPTimeout(); got != 5*time.Second {
+		t.Errorf("ResolveHTTPTimeout() = %v, want %v", got, 5*time.Second)
+	}
+}

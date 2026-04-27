@@ -8,7 +8,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const defaultCacheTTL = 5 * time.Minute
+const (
+	defaultCacheTTL     = 5 * time.Minute
+	defaultHTTPTimeout  = 10 * time.Second
+)
 
 type GithubEnterprise struct {
 	Hostname string `yaml:"api_hostname"`
@@ -23,8 +26,12 @@ type Source struct {
 type Config struct {
 	// CacheTTL is parsed by time.ParseDuration ("5m", "30s", "1h"). An empty
 	// or unparseable value falls back to defaultCacheTTL.
-	CacheTTL string   `yaml:"cache_ttl"`
-	Sources  []Source `yaml:"sources"`
+	CacheTTL string `yaml:"cache_ttl"`
+	// HTTPTimeout caps how long a single upstream fetch (connect + headers +
+	// body read) can take before it's abandoned. Parsed by time.ParseDuration.
+	// An empty or unparseable value falls back to defaultHTTPTimeout.
+	HTTPTimeout string   `yaml:"http_timeout"`
+	Sources     []Source `yaml:"sources"`
 }
 
 // ResolveCacheTTL returns the configured cache TTL, falling back to a sane
@@ -37,6 +44,20 @@ func (c *Config) ResolveCacheTTL() time.Duration {
 	if err != nil {
 		log.Printf("Invalid cache_ttl %q, falling back to %s: %v", c.CacheTTL, defaultCacheTTL, err)
 		return defaultCacheTTL
+	}
+	return d
+}
+
+// ResolveHTTPTimeout returns the configured per-request HTTP timeout,
+// falling back to a sane default when unset or malformed.
+func (c *Config) ResolveHTTPTimeout() time.Duration {
+	if c.HTTPTimeout == "" {
+		return defaultHTTPTimeout
+	}
+	d, err := time.ParseDuration(c.HTTPTimeout)
+	if err != nil {
+		log.Printf("Invalid http_timeout %q, falling back to %s: %v", c.HTTPTimeout, defaultHTTPTimeout, err)
+		return defaultHTTPTimeout
 	}
 	return d
 }
