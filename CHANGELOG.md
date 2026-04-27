@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `ussher` invoked with no arguments now prints `usage: ussher <username>`
+  and exits cleanly instead of panicking with a Go runtime "index out of
+  range" trace. The argument-count check used to live below the
+  `os.Args[1] == "--version"` access, making the bare-invocation case
+  unreachable. ([#29])
+
 ## [1.1.0] - 2026-04-27
 
 ### Added
@@ -93,4 +101,5 @@ Initial release.
 [#10]: https://github.com/dolph/ussher/pull/10
 [#12]: https://github.com/dolph/ussher/issues/12
 [#25]: https://github.com/dolph/ussher/pull/25
+[#29]: https://github.com/dolph/ussher/issues/29
 [#31]: https://github.com/dolph/ussher/issues/31

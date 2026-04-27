@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 )
@@ -24,10 +25,26 @@ func initLog() {
 	log.SetOutput(file)
 }
 
+// validateArgs requires args to look like `ussher <single-arg>` (a username
+// or `--version`) and returns the single arg or a usage error. The wrong-arg-
+// count check has to live before any os.Args[1] access; otherwise invoking
+// `ussher` with no args panics with "index out of range".
+func validateArgs(args []string) (string, error) {
+	if len(args) != 2 {
+		return "", errors.New("usage: ussher <username>")
+	}
+	return args[1], nil
+}
+
 func main() {
+	arg, err := validateArgs(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Support `ussher --version` to print versioning info about the executable
 	// before proceeding to security-hardening checks.
-	if os.Args[1] == "--version" {
+	if arg == "--version" {
 		PrintVersion()
 		return
 	}
@@ -44,13 +61,8 @@ func main() {
 	// a non-root user
 	initLog()
 
-	// Check if the input username is provided
-	if len(os.Args) != 2 {
-		log.Fatal("usage: ussher <username>")
-	}
-
 	// Check if the input username is valid
-	username := os.Args[1]
+	username := arg
 	if !isValidUser(username) {
 		log.Fatal("User not found")
 	}
