@@ -20,7 +20,15 @@ When `~/.ssh/authorized_keys` does not contain the keys required to authenticate
 
 ## Recommended installation & usage
 
-1. Download the latest release of `ussher` from [github.com/dolph/ussher](https://github.com/dolph/ussher/releases/latest).
+1. Download the latest release of `ussher` from [github.com/dolph/ussher](https://github.com/dolph/ussher/releases/latest), along with its `sha256` checksum, and verify the binary before installing:
+
+   ```bash
+   curl -fLO https://github.com/dolph/ussher/releases/latest/download/ussher
+   curl -fLO https://github.com/dolph/ussher/releases/latest/download/ussher.sha256
+   sha256sum -c ussher.sha256
+   ```
+
+   `sha256sum -c` exits non-zero if the binary doesn't match the published checksum. Don't proceed past this step on a mismatch.
 
 2. Create a dedicated user and group to run `ussher`, named `ussher`:
 
