@@ -106,6 +106,18 @@ sources:
 - url: https://github.com/dolph.keys
 ```
 
+### `http_timeout`
+
+`http_timeout` caps how long a single upstream fetch (connect + headers + body read) can take before `ussher` gives up on it. A hung or stalled source — DNS that resolves but never returns, a TLS handshake that hangs, an HTTP server that accepts the connection but never responds — would otherwise block `sshd`'s authentication path until the OS-default timeout fires (often 2+ minutes per attempt). With `http_timeout`, `ussher` abandons the source quickly, treats the failure exactly like any other (logs and contributes zero keys from that source), and the rest of the configured sources continue to be served.
+
+`http_timeout` accepts any duration string understood by [`time.ParseDuration`](https://pkg.go.dev/time#ParseDuration) — for example `500ms`, `10s`, `30s`. The default when unset is `10s`. Tighter values trade a higher rate of "slow but healthy upstream gave up" denials for tighter login latency under partial outages; looser values do the opposite.
+
+```yaml
+http_timeout: 10s
+sources:
+- url: https://github.com/dolph.keys
+```
+
 ## Troubleshooting
 
 ### `Refusing to run unnecessarily writable binary`

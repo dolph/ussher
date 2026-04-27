@@ -103,6 +103,43 @@ func TestGetURL_UnreachableIsNotFatal(t *testing.T) {
 	}
 }
 
+func TestGetURL_TimeoutIsNotFatal(t *testing.T) {
+	// Server that accepts the connection but stalls before responding,
+	// simulating a hung upstream. Without http.Client.Timeout the test would
+	// hang for the OS-default; with a tight timeout the client must give up
+	// promptly and GetURL must return empty (not panic, not log.Fatal).
+	released := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-released
+	}))
+	defer func() {
+		close(released)
+		srv.Close()
+	}()
+
+	timeout := 100 * time.Millisecond
+	c, cleanup := newTestClient(t, &http.Client{Timeout: timeout})
+	defer cleanup()
+
+	start := time.Now()
+	keys := c.GetURL(srv.URL)
+	elapsed := time.Since(start)
+
+	if len(keys) != 0 {
+		t.Errorf("want empty slice on timeout, got %v", keys)
+	}
+	if elapsed > 5*timeout {
+		t.Errorf("expected timeout to fire near %s, took %s", timeout, elapsed)
+	}
+}
+
+func TestNewHTTPClient_PropagatesTimeout(t *testing.T) {
+	c := NewHTTPClient(time.Minute, 7*time.Second)
+	if got := c.http.Timeout; got != 7*time.Second {
+		t.Errorf("NewHTTPClient http.Timeout = %s, want 7s", got)
+	}
+}
+
 func TestGetGHE_UnreachableIsNotFatal(t *testing.T) {
 	c, cleanup := newTestClient(t, &http.Client{Timeout: 2 * time.Second})
 	defer cleanup()

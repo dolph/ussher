@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable disk-cache TTL via the `cache_ttl` field in
   `/etc/ussher/<user>.yml`, parsed by `time.ParseDuration` (`30s`, `5m`, `1h`).
   Defaults to `5m` when unset. ([#3], [#8])
+- Configurable per-request HTTP timeout via the `http_timeout` field, parsed
+  by `time.ParseDuration` (`500ms`, `10s`, `30s`). Defaults to `10s` when
+  unset. ([#31])
 - A `sha256` checksum of the release binary is now published as a release
   asset alongside the binary itself, and `install.sh` verifies it before
   proceeding. The README quickstart shows the same verification commands for
@@ -34,6 +37,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   entire `ussher` invocation on the first source failure, dropping authorized
   keys produced by every other healthy source. Errors are now logged and the
   failing source contributes zero keys. ([#2], [#10])
+- `http.Client` now has a default 10s timeout, so a hung or stalled upstream
+  source can no longer block `sshd`'s authentication path indefinitely.
+  Previously a misbehaving source (DNS that resolved but never responded, a
+  TLS handshake that hung, etc.) would stall `Run`'s `WaitGroup` until the
+  OS-default TCP timeout (often minutes) and `sshd` would block waiting for
+  `ussher` for that entire duration. Operators can override the default via
+  the `http_timeout` config field. ([#31])
 
 ### Security
 
@@ -83,3 +93,4 @@ Initial release.
 [#10]: https://github.com/dolph/ussher/pull/10
 [#12]: https://github.com/dolph/ussher/issues/12
 [#25]: https://github.com/dolph/ussher/pull/25
+[#31]: https://github.com/dolph/ussher/issues/31
