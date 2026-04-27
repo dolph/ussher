@@ -1,9 +1,12 @@
 #!/bin/bash
 set -e
 
-# Download the latest binary if one does not exist locally
+# Download the latest binary if one does not exist locally, and verify it
+# against the published sha256 before doing anything with the bytes.
 if ! [ -f ussher ]; then
-    curl -L -o https://github.com/dolph/ussher/releases/latest/download/ussher
+    curl -fLO https://github.com/dolph/ussher/releases/latest/download/ussher
+    curl -fLO https://github.com/dolph/ussher/releases/latest/download/ussher.sha256
+    sha256sum -c ussher.sha256
 fi
 
 # Create a user if one does not exist
