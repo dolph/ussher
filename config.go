@@ -70,6 +70,14 @@ func (c *Config) LoadConfigByUser(username string) {
 }
 
 func (c *Config) LoadConfigByPath(path string) {
+	// Before reading the config file, check that it isn't world-writable.
+	if worldWritable, _ := isFileWorldWritable(path); worldWritable {
+		log.Printf(
+			"Refusing to load configuration from %v: file is world-writable",
+			path,
+		)
+		return
+	}
 	yamlFile, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("Failed to %v ", err)
