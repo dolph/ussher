@@ -1,0 +1,48 @@
+name: CI
+
+# Build, vet, and test the Go binary, and lint shell scripts. Mirrors
+# dolph/pizzabot so the release workflow can chain off of a successful
+# run.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  shellcheck:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Find and lint shell scripts
+        run: |
+          set -euo pipefail
+          # Lint every tracked .sh file, regardless of directory. `git ls-files`
+          # keeps us scoped to tracked content and picks up newly added or
+          # renamed scripts on the PR that introduces them.
+          git ls-files -z -- '*.sh' | xargs -0 -r shellcheck --
+
+  test:
+    name: build & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go build
+        run: go build ./...
+
+      - name: go test
+        run: go test -race ./...
