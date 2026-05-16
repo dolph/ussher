@@ -1,0 +1,183 @@
+name: release
+
+# Continuous release. After the CI workflow finishes successfully on
+# `main` (i.e. immediately after a merge), this workflow reads the
+# merged PR's `release:*` label, computes the next semver tag, and
+# publishes a git tag + GitHub release. Tag format is `vMAJOR.MINOR.PATCH`
+# — the convention Go modules require, used by `goreleaser`,
+# `release-please`, `semantic-release`, and most published Go libraries.
+#
+# Version-bump labels (apply exactly one on the PR; default `release:patch`):
+#
+#   release:major  → 1.4.7 → 2.0.0  Breaking change.
+#   release:minor  → 1.4.7 → 1.5.0  Backwards-compatible new behavior.
+#   release:patch  → 1.4.7 → 1.4.8  Bug fix, refactor, dependency bump.
+#                                   Default when nothing else is set.
+#   release:skip   → no release     Docs-only / CI-only change.
+#
+# Precedence when more than one label is present: skip > major > minor >
+# patch. `release:skip` always wins so a PR can be parked mid-flight;
+# otherwise the largest declared bump wins.
+#
+# Direct pushes to `main` (no PR) fall back to `release:patch`.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write       # push tags, create releases
+  pull-requests: read   # read the merged PR's labels
+
+jobs:
+  release:
+    # Only act on a successful CI run that was itself triggered by a push
+    # to main (i.e. the post-merge run, not the PR-time run).
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0  # full history + tags for semver math
+
+      - name: Resolve merged PR and version bump
+        id: bump
+        run: |
+          set -euo pipefail
+          pr_json="$(gh api "repos/${{ github.repository }}/commits/${HEAD_SHA}/pulls" --jq '.[0] // empty')"
+          if [[ -z "$pr_json" ]]; then
+            echo "No PR found for ${HEAD_SHA} — direct push to main. Defaulting to release:patch."
+            echo "bump=patch" >> "$GITHUB_OUTPUT"
+            echo "pr=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          number="$(jq -r '.number' <<<"$pr_json")"
+          labels="$(jq -r '.labels[].name' <<<"$pr_json")"
+          echo "PR #${number} labels:"
+          printf '  %s\n' $labels
+
+          # Precedence: skip > major > minor > patch (default).
+          if grep -qx 'release:skip' <<<"$labels"; then
+            bump=skip
+          elif grep -qx 'release:major' <<<"$labels"; then
+            bump=major
+          elif grep -qx 'release:minor' <<<"$labels"; then
+            bump=minor
+          else
+            bump=patch
+          fi
+
+          echo "Resolved bump: ${bump}"
+          echo "bump=${bump}" >> "$GITHUB_OUTPUT"
+          echo "pr=${number}" >> "$GITHUB_OUTPUT"
+
+      - name: Skip release
+        if: steps.bump.outputs.bump == 'skip'
+        run: |
+          echo "release:skip on PR #${{ steps.bump.outputs.pr }} — no tag created."
+
+      - name: Compute next semver tag
+        if: steps.bump.outputs.bump != 'skip'
+        id: tag
+        run: |
+          set -euo pipefail
+          git fetch --tags --quiet
+          latest="$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)"
+          if [[ -z "$latest" ]]; then
+            latest="v0.0.0"
+          fi
+          IFS='.' read -r major minor patch <<<"${latest#v}"
+          case "${{ steps.bump.outputs.bump }}" in
+            major) major=$((major+1)); minor=0; patch=0 ;;
+            minor) minor=$((minor+1)); patch=0 ;;
+            patch) patch=$((patch+1)) ;;
+          esac
+          next="v${major}.${minor}.${patch}"
+          echo "Bumping ${latest} → ${next} (${{ steps.bump.outputs.bump }})"
+          echo "latest=${latest}" >> "$GITHUB_OUTPUT"
+          echo "next=${next}" >> "$GITHUB_OUTPUT"
+
+      - name: Install Go
+        if: steps.bump.outputs.bump != 'skip'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build release binary
+        if: steps.bump.outputs.bump != 'skip'
+        # Static linux/amd64 binary. CGO off so the binary has no glibc
+        # dependency; -trimpath + -s -w shrinks size and strips local paths.
+        # -X stamps the release tag, short commit SHA, and build metadata
+        # onto the variables declared in version.go so `ussher --version`
+        # can be traced back to a specific release.
+        #
+        # Asset is named `ussher` (no -linux-amd64 suffix) so the existing
+        # install.sh — which curls
+        # https://github.com/dolph/ussher/releases/latest/download/ussher —
+        # keeps working.
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.tag.outputs.next }}"
+          COMMIT="${HEAD_SHA:0:7}"
+          GO_VERSION="$(go version | cut -d' ' -f3)"
+          BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          LD="-s -w \
+            -X 'main.GitTag=${TAG}' \
+            -X 'main.GitCommit=${COMMIT}' \
+            -X 'main.GoVersion=${GO_VERSION}' \
+            -X 'main.BuildTimestamp=${BUILD_DATE}' \
+            -X 'main.BuildOS=linux' \
+            -X 'main.BuildArch=amd64' \
+            -X 'main.BuildTainted=false'"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+            go build -trimpath -ldflags="${LD}" \
+            -o ussher .
+          ls -l ussher
+          ./ussher --version
+
+      - name: Generate checksum
+        if: steps.bump.outputs.bump != 'skip'
+        run: sha256sum ussher > ussher.sha256
+
+      - name: Create and push tag
+        if: steps.bump.outputs.bump != 'skip'
+        run: |
+          set -euo pipefail
+          tag="${{ steps.tag.outputs.next }}"
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "Tag ${tag} already exists locally — skipping." && exit 0
+          fi
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "${tag}" "${HEAD_SHA}" -m "${tag}"
+          git push origin "${tag}"
+
+      - name: Publish GitHub release
+        if: steps.bump.outputs.bump != 'skip'
+        run: |
+          set -euo pipefail
+          tag="${{ steps.tag.outputs.next }}"
+          prev="${{ steps.tag.outputs.latest }}"
+          notes_args=(--generate-notes)
+          if [[ "${prev}" != "v0.0.0" ]]; then
+            notes_args+=(--notes-start-tag "${prev}")
+          fi
+          gh release create "${tag}" ussher ussher.sha256 \
+            --target "${HEAD_SHA}" \
+            --title "${tag}" \
+            "${notes_args[@]}"
