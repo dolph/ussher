@@ -1,7 +1,7 @@
 name: CI
 
-# Build, vet, and test the Go binary, and lint shell scripts. Mirrors
-# dolph/pizzabot so the release workflow can chain off of a successful
+# Build, vet, and test the Go binary, and lint shell scripts, on every
+# PR and push to main. The release workflow chains off of a successful
 # run.
 
 on:
