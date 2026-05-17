@@ -71,6 +71,8 @@ func main() {
 	log.Print("Sourcing authorized_keys for ", username)
 
 	var c Config
-	c.LoadConfigByUser(username)
+	if err := c.LoadConfigByUser(username); err != nil {
+		log.Fatal(err)
+	}
 	Run(&c)
 }

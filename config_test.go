@@ -37,7 +37,9 @@ sources:
 	if err != nil {
 		t.Errorf("Failed to get the absolute path of tmpFile: %v", err)
 	}
-	config.LoadConfigByPath(tmpFilePath)
+	if err := config.LoadConfigByPath(tmpFilePath); err != nil {
+		t.Fatalf("LoadConfigByPath: %v", err)
+	}
 
 	expectedSources := []Source{
 		{URL: "https://example.com/keys"},
@@ -68,7 +70,9 @@ sources:
 	}
 
 	config = &Config{}
-	config.LoadConfigByPath(tmpFilePath)
+	if err := config.LoadConfigByPath(tmpFilePath); err == nil {
+		t.Fatal("expected parse error for invalid YAML")
+	}
 
 	if len(config.Sources) != 0 {
 		t.Errorf("Expected 0 sources, got %d: %v", len(config.Sources), config.Sources[0])
@@ -107,7 +111,9 @@ sources:
 	defer cleanup()
 
 	config := &Config{}
-	config.LoadConfigByPath(tmpFile)
+	if err := config.LoadConfigByPath(tmpFile); err != nil {
+		t.Fatalf("LoadConfigByPath: %v", err)
+	}
 
 	if config.CacheTTL != "15m" {
 		t.Errorf("Expected CacheTTL %q, got %q", "15m", config.CacheTTL)
@@ -149,7 +155,9 @@ sources:
 	defer cleanup()
 
 	config := &Config{}
-	config.LoadConfigByPath(tmpFile)
+	if err := config.LoadConfigByPath(tmpFile); err != nil {
+		t.Fatalf("LoadConfigByPath: %v", err)
+	}
 
 	if config.HTTPTimeout != "5s" {
 		t.Errorf("Expected HTTPTimeout %q, got %q", "5s", config.HTTPTimeout)

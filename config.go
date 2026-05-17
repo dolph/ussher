@@ -1,6 +1,9 @@
 package main
 
 import (
+	"errors"
+	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"time"
@@ -62,23 +65,24 @@ func (c *Config) ResolveHTTPTimeout() time.Duration {
 	return d
 }
 
-func (c *Config) LoadConfigByUser(username string) {
+func (c *Config) LoadConfigByUser(username string) error {
 	// `username` is validated at this point to be a valid Linux username, so
 	// it's safe to load this configuration file without the risk of loading
 	// arbitrary paths.
-	c.LoadConfigByPath("/etc/ussher/" + username + ".yml")
+	return c.LoadConfigByPath("/etc/ussher/" + username + ".yml")
 }
 
-func (c *Config) LoadConfigByPath(path string) {
+func (c *Config) LoadConfigByPath(path string) error {
 	yamlFile, err := os.ReadFile(path)
 	if err != nil {
-		log.Printf("Failed to %v ", err)
-		return
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		return fmt.Errorf("read config %s: %w", path, err)
 	}
-	err = yaml.Unmarshal(yamlFile, c)
-	if err != nil {
-		log.Printf("Failed to parse as YAML: %v", err)
-		return
+	if err := yaml.Unmarshal(yamlFile, c); err != nil {
+		return fmt.Errorf("parse config %s: %w", path, err)
 	}
 	log.Printf("Loaded configuration from %v", path)
+	return nil
 }
