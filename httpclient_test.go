@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,13 @@ import (
 	"testing"
 	"time"
 )
+
+
+type errTransport struct{}
+
+func (errTransport) RoundTrip(*http.Request) (*http.Response, error) {
+	return nil, errors.New("simulated upstream failure")
+}
 
 // newTestClient builds a Client wired to a caller-supplied http.Client and a
 // fresh temp cache directory. Returns the client plus a cleanup func.
@@ -140,19 +148,19 @@ func TestNewHTTPClient_PropagatesTimeout(t *testing.T) {
 	}
 }
 
-func TestGetGHE_UnreachableIsNotFatal(t *testing.T) {
-	c, cleanup := newTestClient(t, &http.Client{Timeout: 2 * time.Second})
+func TestGetGHE_TransportErrorIsNotFatal(t *testing.T) {
+	c, cleanup := newTestClient(t, &http.Client{
+		Timeout:   2 * time.Second,
+		Transport: errTransport{},
+	})
 	defer cleanup()
 
-	// example.invalid is reserved and guaranteed to not resolve, exercising
-	// GetGHE's transport-error path. Pre-fix this would log.Fatal and kill
-	// the test process.
 	keys := c.GetGHE(GithubEnterprise{
-		Hostname: "example.invalid",
+		Hostname: "git.example.com",
 		Username: "alice",
 		Token:    "irrelevant",
 	})
 	if len(keys) != 0 {
-		t.Errorf("want empty slice on unreachable GHE host, got %v", keys)
+		t.Errorf("want empty slice on transport error, got %v", keys)
 	}
 }
