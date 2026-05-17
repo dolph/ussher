@@ -1,23 +1,24 @@
 package main
 
 import (
+	"os/user"
 	"testing"
 )
 
 func TestIsValidUser(t *testing.T) {
+	me, err := user.Current()
+	if err != nil {
+		t.Skipf("cannot determine current user: %v", err)
+	}
+
 	tests := []struct {
 		name          string
 		username      string
 		expectedValue bool
 	}{
 		{
-			name:          "Valid user (root)",
-			username:      "root",
-			expectedValue: true,
-		},
-		{
-			name:          "Valid user (nobody)",
-			username:      "nobody",
+			name:          "Valid current user",
+			username:      me.Username,
 			expectedValue: true,
 		},
 		{
