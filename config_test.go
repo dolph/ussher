@@ -158,3 +158,24 @@ sources:
 		t.Errorf("ResolveHTTPTimeout() = %v, want %v", got, 5*time.Second)
 	}
 }
+
+
+func TestResolveStaleTTL(t *testing.T) {
+	cases := []struct {
+		name string
+		raw  string
+		want time.Duration
+	}{
+		{name: "empty disables", raw: "", want: 0},
+		{name: "one hour", raw: "1h", want: time.Hour},
+		{name: "invalid disables", raw: "nope", want: 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := &Config{StaleTTL: tc.raw}
+			if got := c.ResolveStaleTTL(); got != tc.want {
+				t.Fatalf("ResolveStaleTTL() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}

@@ -134,7 +134,7 @@ func TestGetURL_TimeoutIsNotFatal(t *testing.T) {
 }
 
 func TestNewHTTPClient_PropagatesTimeout(t *testing.T) {
-	c := NewHTTPClient(time.Minute, 7*time.Second)
+	c := NewHTTPClient(time.Minute, 0, 7*time.Second)
 	if got := c.http.Timeout; got != 7*time.Second {
 		t.Errorf("NewHTTPClient http.Timeout = %s, want 7s", got)
 	}
@@ -154,5 +154,25 @@ func TestGetGHE_UnreachableIsNotFatal(t *testing.T) {
 	})
 	if len(keys) != 0 {
 		t.Errorf("want empty slice on unreachable GHE host, got %v", keys)
+	}
+}
+
+
+func TestClientStaleFresh(t *testing.T) {
+	c := &Client{ttl: time.Minute, staleTTL: time.Hour}
+	freshAt := time.Now().Add(-30 * time.Second)
+	if !c.fresh(freshAt) {
+		t.Fatal("expected entry within cache_ttl to be fresh")
+	}
+	staleAt := time.Now().Add(-2 * time.Minute)
+	if c.fresh(staleAt) {
+		t.Fatal("expected entry past cache_ttl not to be fresh")
+	}
+	if !c.staleFresh(staleAt) {
+		t.Fatal("expected entry within stale_ttl extension to be staleFresh")
+	}
+	tooOld := time.Now().Add(-2 * time.Hour)
+	if c.staleFresh(tooOld) {
+		t.Fatal("expected entry past stale window not to be staleFresh")
 	}
 }

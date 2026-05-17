@@ -13,29 +13,40 @@ import (
 )
 
 type Client struct {
-	http  *http.Client
-	cache *Cache
-	ttl   time.Duration
+	http      *http.Client
+	cache     *Cache
+	ttl       time.Duration
+	staleTTL  time.Duration
 }
 
-func NewHTTPClient(ttl, httpTimeout time.Duration) *Client {
+func NewHTTPClient(ttl, staleTTL, httpTimeout time.Duration) *Client {
 	return &Client{
 		http: &http.Client{
 			Timeout: httpTimeout,
 		},
-		cache: NewCache("/var/cache/ussher"),
-		ttl:   ttl,
+		cache:    NewCache("/var/cache/ussher"),
+		ttl:      ttl,
+		staleTTL: staleTTL,
 	}
 }
 
 // fresh reports whether a cached entry written at setAt is still within the
 // configured TTL.
+
+func (c *Client) staleFresh(setAt time.Time) bool {
+	if c.staleTTL <= 0 {
+		return false
+	}
+	return time.Since(setAt) < c.ttl+c.staleTTL
+}
+
 func (c *Client) fresh(setAt time.Time) bool {
 	return time.Since(setAt) < c.ttl
 }
 
 func (c *Client) GetURL(url string) []string {
-	if cached, setAt, ok := c.cache.Get(url); ok && c.fresh(setAt) {
+	cached, setAt, ok := c.cache.Get(url)
+	if ok && c.fresh(setAt) {
 		return bodyToKeys(cached)
 	}
 
@@ -43,6 +54,10 @@ func (c *Client) GetURL(url string) []string {
 	resp, err := c.http.Get(url)
 	if err != nil {
 		log.Printf("Failed to fetch %v: %v", url, err)
+		if ok && c.staleFresh(setAt) {
+			log.Printf("Serving stale cache for %v after fetch error", url)
+			return bodyToKeys(cached)
+		}
 		return make([]string, 0)
 	}
 	defer resp.Body.Close()
@@ -51,12 +66,20 @@ func (c *Client) GetURL(url string) []string {
 		bodyBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Printf("Failed to read response body from %v: %v", url, err)
+			if ok && c.staleFresh(setAt) {
+				log.Printf("Serving stale cache for %v after read error", url)
+				return bodyToKeys(cached)
+			}
 			return make([]string, 0)
 		}
 		c.cache.Set(url, bodyBytes)
 		return bodyToKeys(bodyBytes)
 	}
 	log.Printf("HTTP %d from %v", resp.StatusCode, url)
+	if ok && c.staleFresh(setAt) {
+		log.Printf("Serving stale cache for %v after HTTP %d", url, resp.StatusCode)
+		return bodyToKeys(cached)
+	}
 	return make([]string, 0)
 }
 

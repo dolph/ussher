@@ -8,7 +8,7 @@ import (
 func Run(c *Config) {
 	var wg sync.WaitGroup
 
-	client := NewHTTPClient(c.ResolveCacheTTL(), c.ResolveHTTPTimeout())
+	client := NewHTTPClient(c.ResolveCacheTTL(), c.ResolveStaleTTL(), c.ResolveHTTPTimeout())
 	keyChan := make(chan []string)
 	for _, source := range c.Sources {
 		wg.Add(1)

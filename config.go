@@ -27,6 +27,9 @@ type Config struct {
 	// CacheTTL is parsed by time.ParseDuration ("5m", "30s", "1h"). An empty
 	// or unparseable value falls back to defaultCacheTTL.
 	CacheTTL string `yaml:"cache_ttl"`
+	// StaleTTL extends how long a cache entry may be served after cache_ttl
+	// when the upstream fetch fails. Zero disables stale serving.
+	StaleTTL string `yaml:"stale_ttl"`
 	// HTTPTimeout caps how long a single upstream fetch (connect + headers +
 	// body read) can take before it's abandoned. Parsed by time.ParseDuration.
 	// An empty or unparseable value falls back to defaultHTTPTimeout.
@@ -50,6 +53,25 @@ func (c *Config) ResolveCacheTTL() time.Duration {
 
 // ResolveHTTPTimeout returns the configured per-request HTTP timeout,
 // falling back to a sane default when unset or malformed.
+
+// ResolveStaleTTL returns how long beyond cache_ttl stale entries may be served
+// when upstream fetches fail. Zero disables stale serving.
+func (c *Config) ResolveStaleTTL() time.Duration {
+	if c.StaleTTL == "" {
+		return 0
+	}
+	d, err := time.ParseDuration(c.StaleTTL)
+	if err != nil {
+		log.Printf("Invalid stale_ttl %q, disabling stale cache: %v", c.StaleTTL, err)
+		return 0
+	}
+	if d < 0 {
+		log.Printf("Invalid stale_ttl %v, disabling stale cache", d)
+		return 0
+	}
+	return d
+}
+
 func (c *Config) ResolveHTTPTimeout() time.Duration {
 	if c.HTTPTimeout == "" {
 		return defaultHTTPTimeout
