@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 )
@@ -66,6 +67,8 @@ func main() {
 	if !isValidUser(username) {
 		log.Fatal("User not found")
 	}
+
+	log.SetPrefix(fmt.Sprintf("[%s] ", username))
 
 	// At this point, we know that the input username is valid and safe to use.
 	log.Print("Sourcing authorized_keys for ", username)
