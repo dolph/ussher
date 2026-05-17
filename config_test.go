@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,18 +8,13 @@ import (
 )
 
 func createTempConfig(t *testing.T, content string) (string, func()) {
-	tmpDir, err := ioutil.TempDir("", "config-test")
-	if err != nil {
-		t.Fatal("Failed to create temp dir for config test:", err)
-	}
-
+	t.Helper()
+	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "testuser.yml")
-	err = ioutil.WriteFile(tmpFile, []byte(content), 0644)
-	if err != nil {
+	if err := os.WriteFile(tmpFile, []byte(content), 0o644); err != nil {
 		t.Fatal("Failed to create temp config file:", err)
 	}
-
-	return tmpFile, func() { os.RemoveAll(tmpDir) }
+	return tmpFile, func() {}
 }
 
 func TestConfigLoad(t *testing.T) {
@@ -156,5 +150,25 @@ sources:
 	}
 	if got := config.ResolveHTTPTimeout(); got != 5*time.Second {
 		t.Errorf("ResolveHTTPTimeout() = %v, want %v", got, 5*time.Second)
+	}
+}
+
+func TestConfigLoadRejectsWorldWritable(t *testing.T) {
+	validYamlContent := `
+sources:
+- url: https://example.com/keys
+`
+	tmpFile, cleanup := createTempConfig(t, validYamlContent)
+	defer cleanup()
+
+	if err := os.Chmod(tmpFile, 0o666); err != nil {
+		t.Fatal(err)
+	}
+
+	config := &Config{}
+	config.LoadConfigByPath(tmpFile)
+
+	if len(config.Sources) != 0 {
+		t.Fatalf("expected no sources loaded from world-writable config, got %d", len(config.Sources))
 	}
 }

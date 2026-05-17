@@ -70,6 +70,16 @@ func (c *Config) LoadConfigByUser(username string) {
 }
 
 func (c *Config) LoadConfigByPath(path string) {
+	worldWritable, err := isFileWorldWritable(path)
+	if err != nil {
+		log.Printf("Failed to stat config %v: %v", path, err)
+		return
+	}
+	if worldWritable {
+		log.Printf("Refusing to load world-writable config file %v", path)
+		return
+	}
+
 	yamlFile, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("Failed to %v ", err)
