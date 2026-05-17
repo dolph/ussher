@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"os/user"
 	"regexp"
@@ -11,13 +11,13 @@ import (
 func isExecutableWritable() bool {
 	executablePath, err := os.Executable()
 	if err != nil {
-		fmt.Printf("Failed to get a path to ussher executable: %v\n", err)
+		log.Printf("Failed to get a path to ussher executable: %v", err)
 		return true
 	}
 
 	fileInfo, err := os.Stat(executablePath)
 	if err != nil {
-		fmt.Printf("Failed to stat ussher executable: %v\n", err)
+		log.Printf("Failed to stat ussher executable: %v", err)
 		return true
 	}
 
@@ -25,13 +25,13 @@ func isExecutableWritable() bool {
 
 	// Check for group writable
 	if mode&0020 != 0 {
-		fmt.Println("ussher binary is group writable")
+		log.Print("ussher binary is group writable")
 		return true
 	}
 
 	// Check for world writable
 	if mode&0002 != 0 {
-		fmt.Println("ussher binary is world writable")
+		log.Print("ussher binary is world writable")
 		return true
 	}
 
@@ -62,11 +62,7 @@ func isValidUser(name string) bool {
 
 	// Check if the input string is already an existing user account on the host
 	_, err := user.Lookup(name)
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 // Ensures we're not reading a file that can be easily modified by an attacker.

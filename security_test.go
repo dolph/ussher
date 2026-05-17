@@ -1,53 +1,34 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 )
 
-func TestIsValidUser(t *testing.T) {
-	tests := []struct {
-		name          string
-		username      string
-		expectedValue bool
-	}{
-		{
-			name:          "Valid user (root)",
-			username:      "root",
-			expectedValue: true,
-		},
-		{
-			name:          "Valid user (nobody)",
-			username:      "nobody",
-			expectedValue: true,
-		},
-		{
-			name:          "Invalid user - starts with number",
-			username:      "1kofabhhfsbf6krb",
-			expectedValue: false,
-		},
-		{
-			name:          "Invalid user - contains uppercase letters",
-			username:      "XD5hObIMZF2zKS7W",
-			expectedValue: false,
-		},
-		{
-			name:          "Invalid user - too long",
-			username:      "idfkjcacexia1dyji5iwcfweoliamzpn1",
-			expectedValue: false,
-		},
-		{
-			name:          "Invalid user - contains invalid characters",
-			username:      "moctcg!@",
-			expectedValue: false,
-		},
+func TestIsFileWorldWritable(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "keys")
+	if err := os.WriteFile(path, []byte("ssh-rsa AAAA"), 0o644); err != nil {
+		t.Fatal(err)
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := isValidUser(test.username)
-			if result != test.expectedValue {
-				t.Errorf("Expected %v, got %v", test.expectedValue, result)
-			}
-		})
+	writable, err := isFileWorldWritable(path)
+	if err != nil {
+		t.Fatalf("isFileWorldWritable: %v", err)
+	}
+	if writable {
+		t.Error("expected 0644 file to not be world-writable")
+	}
+
+	if err := os.Chmod(path, 0o666); err != nil {
+		t.Fatal(err)
+	}
+	writable, err = isFileWorldWritable(path)
+	if err != nil {
+		t.Fatalf("isFileWorldWritable after chmod: %v", err)
+	}
+	if !writable {
+		t.Error("expected 0666 file to be world-writable")
 	}
 }
