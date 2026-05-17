@@ -67,9 +67,9 @@ type GHEKey struct {
 
 func (c *Client) GetGHE(ghe GithubEnterprise) []string {
 	url := "https://" + ghe.Hostname + "/users/" + ghe.Username + "/keys"
+	cacheKey := httpCacheKey(url, ghe.Token)
 
-	/* This will cache responses regardless of the token in context here, which could be a security risk. */
-	if cached, setAt, ok := c.cache.Get(url); ok && c.fresh(setAt) {
+	if cached, setAt, ok := c.cache.Get(cacheKey); ok && c.fresh(setAt) {
 		var keys []GHEKey
 		err := json.Unmarshal(cached, &keys)
 		if err != nil {
@@ -103,7 +103,7 @@ func (c *Client) GetGHE(ghe GithubEnterprise) []string {
 			log.Printf("Failed to read response body from %v: %v", url, err)
 			return make([]string, 0)
 		}
-		c.cache.Set(url, bodyBytes)
+		c.cache.Set(cacheKey, bodyBytes)
 		var keys []GHEKey
 		if err := json.Unmarshal(bodyBytes, &keys); err != nil {
 			log.Printf("Failed to decode JSON from %v: %v", url, err)
