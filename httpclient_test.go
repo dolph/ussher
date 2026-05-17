@@ -2,10 +2,8 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 )
@@ -14,16 +12,13 @@ import (
 // fresh temp cache directory. Returns the client plus a cleanup func.
 func newTestClient(t *testing.T, httpClient *http.Client) (*Client, func()) {
 	t.Helper()
-	tmpDir, err := ioutil.TempDir("", "httpclient-test")
-	if err != nil {
-		t.Fatal("temp dir:", err)
-	}
+	tmpDir := t.TempDir()
 	c := &Client{
 		http:  httpClient,
 		cache: NewCache(tmpDir),
 		ttl:   time.Minute,
 	}
-	return c, func() { os.RemoveAll(tmpDir) }
+	return c, func() {}
 }
 
 func TestGetURL_Success(t *testing.T) {
@@ -130,6 +125,32 @@ func TestGetURL_TimeoutIsNotFatal(t *testing.T) {
 	}
 	if elapsed > 5*timeout {
 		t.Errorf("expected timeout to fire near %s, took %s", timeout, elapsed)
+	}
+}
+
+func TestBodyToKeys(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+		want []string
+	}{
+		{"empty body", "", []string{}},
+		{"newline only", "\n", []string{}},
+		{"single key", "ssh-rsa AAAA\n", []string{"ssh-rsa AAAA"}},
+		{"skips blank lines", "a\n\nb\n", []string{"a", "b"}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := bodyToKeys([]byte(tc.body))
+			if len(got) != len(tc.want) {
+				t.Fatalf("len = %d, want %d: %v", len(got), len(tc.want), got)
+			}
+			for i := range tc.want {
+				if got[i] != tc.want[i] {
+					t.Errorf("got[%d] = %q, want %q", i, got[i], tc.want[i])
+				}
+			}
+		})
 	}
 }
 

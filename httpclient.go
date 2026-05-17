@@ -117,9 +117,18 @@ func (c *Client) GetGHE(ghe GithubEnterprise) []string {
 }
 
 func bodyToKeys(body []byte) []string {
-	s := string(body)
-	s = strings.TrimSuffix(s, "\n")
-	keys := strings.Split(s, "\n")
+	s := strings.TrimSuffix(string(body), "\n")
+	if s == "" {
+		log.Printf("Found %v key(s)", 0)
+		return []string{}
+	}
+	parts := strings.Split(s, "\n")
+	keys := make([]string, 0, len(parts))
+	for _, line := range parts {
+		if line != "" {
+			keys = append(keys, line)
+		}
+	}
 	log.Printf("Found %v key(s)", len(keys))
 	return keys
 }
