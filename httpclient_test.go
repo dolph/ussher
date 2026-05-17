@@ -140,6 +140,26 @@ func TestNewHTTPClient_PropagatesTimeout(t *testing.T) {
 	}
 }
 
+func TestBodyToKeys(t *testing.T) {
+	tests := []struct {
+		name string
+		body []byte
+		want int
+	}{
+		{"empty", []byte(""), 0},
+		{"newline only", []byte("\n"), 0},
+		{"blank lines", []byte("a\n\nb\n"), 2},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := bodyToKeys(tt.body)
+			if len(got) != tt.want {
+				t.Fatalf("len(bodyToKeys(%q)) = %d; want %d (%v)", tt.body, len(got), tt.want, got)
+			}
+		})
+	}
+}
+
 func TestGetGHE_UnreachableIsNotFatal(t *testing.T) {
 	c, cleanup := newTestClient(t, &http.Client{Timeout: 2 * time.Second})
 	defer cleanup()
