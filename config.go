@@ -13,12 +13,6 @@ const (
 	defaultHTTPTimeout  = 10 * time.Second
 )
 
-type GithubEnterprise struct {
-	Hostname string `yaml:"api_hostname"`
-	Username string `yaml:"user"`
-	Token    string `yaml:"token"`
-}
-
 type Source struct {
 	URL string `yaml:"url"`
 }

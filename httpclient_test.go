@@ -2,10 +2,8 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 )
@@ -14,16 +12,13 @@ import (
 // fresh temp cache directory. Returns the client plus a cleanup func.
 func newTestClient(t *testing.T, httpClient *http.Client) (*Client, func()) {
 	t.Helper()
-	tmpDir, err := ioutil.TempDir("", "httpclient-test")
-	if err != nil {
-		t.Fatal("temp dir:", err)
-	}
+	tmpDir := t.TempDir()
 	c := &Client{
 		http:  httpClient,
 		cache: NewCache(tmpDir),
 		ttl:   time.Minute,
 	}
-	return c, func() { os.RemoveAll(tmpDir) }
+	return c, func() {}
 }
 
 func TestGetURL_Success(t *testing.T) {
@@ -133,6 +128,32 @@ func TestGetURL_TimeoutIsNotFatal(t *testing.T) {
 	}
 }
 
+func TestBodyToKeys(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+		want []string
+	}{
+		{"empty body", "", []string{}},
+		{"newline only", "\n", []string{}},
+		{"single key", "ssh-rsa AAAA\n", []string{"ssh-rsa AAAA"}},
+		{"skips blank lines", "a\n\nb\n", []string{"a", "b"}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := bodyToKeys([]byte(tc.body))
+			if len(got) != len(tc.want) {
+				t.Fatalf("len = %d, want %d: %v", len(got), len(tc.want), got)
+			}
+			for i := range tc.want {
+				if got[i] != tc.want[i] {
+					t.Errorf("got[%d] = %q, want %q", i, got[i], tc.want[i])
+				}
+			}
+		})
+	}
+}
+
 func TestNewHTTPClient_PropagatesTimeout(t *testing.T) {
 	c := NewHTTPClient(time.Minute, 7*time.Second)
 	if got := c.http.Timeout; got != 7*time.Second {
@@ -140,19 +161,3 @@ func TestNewHTTPClient_PropagatesTimeout(t *testing.T) {
 	}
 }
 
-func TestGetGHE_UnreachableIsNotFatal(t *testing.T) {
-	c, cleanup := newTestClient(t, &http.Client{Timeout: 2 * time.Second})
-	defer cleanup()
-
-	// example.invalid is reserved and guaranteed to not resolve, exercising
-	// GetGHE's transport-error path. Pre-fix this would log.Fatal and kill
-	// the test process.
-	keys := c.GetGHE(GithubEnterprise{
-		Hostname: "example.invalid",
-		Username: "alice",
-		Token:    "irrelevant",
-	})
-	if len(keys) != 0 {
-		t.Errorf("want empty slice on unreachable GHE host, got %v", keys)
-	}
-}

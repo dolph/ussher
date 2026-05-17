@@ -4,7 +4,6 @@
 package main
 
 import (
-	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -60,74 +59,18 @@ func (c *Client) GetURL(url string) []string {
 	return make([]string, 0)
 }
 
-type GHEKey struct {
-	ID  int    `json:"id"`
-	Key string `json:"key"`
-}
-
-func (c *Client) GetGHE(ghe GithubEnterprise) []string {
-	url := "https://" + ghe.Hostname + "/users/" + ghe.Username + "/keys"
-
-	/* This will cache responses regardless of the token in context here, which could be a security risk. */
-	if cached, setAt, ok := c.cache.Get(url); ok && c.fresh(setAt) {
-		var keys []GHEKey
-		err := json.Unmarshal(cached, &keys)
-		if err != nil {
-			log.Printf("Failed to decode JSON from cache for %v: %v", url, err)
-			return make([]string, 0)
-		}
-		return GHEKeysToKeys(keys)
-	}
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		log.Printf("Failed to build request for %v: %v", url, err)
-		return make([]string, 0)
-	}
-
-	req.Header = http.Header{
-		"Accept":        {"application/vnd.github+json"},
-		"Authorization": {"token " + ghe.Token}}
-
-	log.Printf("GET %v", url)
-	resp, err := c.http.Do(req)
-	if err != nil {
-		log.Printf("Failed to fetch %v: %v", url, err)
-		return make([]string, 0)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusOK {
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Printf("Failed to read response body from %v: %v", url, err)
-			return make([]string, 0)
-		}
-		c.cache.Set(url, bodyBytes)
-		var keys []GHEKey
-		if err := json.Unmarshal(bodyBytes, &keys); err != nil {
-			log.Printf("Failed to decode JSON from %v: %v", url, err)
-			return make([]string, 0)
-		}
-
-		return GHEKeysToKeys(keys)
-	}
-	log.Printf("HTTP %d from %v", resp.StatusCode, url)
-	return make([]string, 0)
-}
-
 func bodyToKeys(body []byte) []string {
-	s := string(body)
-	s = strings.TrimSuffix(s, "\n")
-	keys := strings.Split(s, "\n")
-	log.Printf("Found %v key(s)", len(keys))
-	return keys
-}
-
-func GHEKeysToKeys(gheKeys []GHEKey) []string {
-	var keys []string
-	for _, gheKey := range gheKeys {
-		keys = append(keys, gheKey.Key)
+	s := strings.TrimSuffix(string(body), "\n")
+	if s == "" {
+		log.Printf("Found %v key(s)", 0)
+		return []string{}
+	}
+	parts := strings.Split(s, "\n")
+	keys := make([]string, 0, len(parts))
+	for _, line := range parts {
+		if line != "" {
+			keys = append(keys, line)
+		}
 	}
 	log.Printf("Found %v key(s)", len(keys))
 	return keys
