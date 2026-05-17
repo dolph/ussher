@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,18 +8,13 @@ import (
 )
 
 func createTempConfig(t *testing.T, content string) (string, func()) {
-	tmpDir, err := ioutil.TempDir("", "config-test")
-	if err != nil {
-		t.Fatal("Failed to create temp dir for config test:", err)
-	}
-
+	t.Helper()
+	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "testuser.yml")
-	err = ioutil.WriteFile(tmpFile, []byte(content), 0644)
-	if err != nil {
+	if err := os.WriteFile(tmpFile, []byte(content), 0o644); err != nil {
 		t.Fatal("Failed to create temp config file:", err)
 	}
-
-	return tmpFile, func() { os.RemoveAll(tmpDir) }
+	return tmpFile, func() {}
 }
 
 func TestConfigLoad(t *testing.T) {

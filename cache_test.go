@@ -2,20 +2,12 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 )
 
 func TestCache(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "cache-test")
-	if err != nil {
-		t.Fatal("Failed to create temporary directory for cache:", err)
-	}
-	defer os.RemoveAll(tempDir)
-
-	cache := NewCache(tempDir)
+	cache := NewCache(t.TempDir())
 
 	testKey := "test_key"
 	testValue := []byte("test_value")
