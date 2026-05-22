@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `main()`, the security gates, and the `isExecutableWritable` permission
+  check are now structured for testability. `runMain(args, deps) error`
+  carries the gate sequence; `isPathUnsafelyWritable(path)` and
+  `uidIsRoot(uid)` carry the gate logic. No behavior change for production
+  invocations — the same gates fire in the same order with the same
+  user-visible messages. Coverage rises from 42% to 62%. ([#13])
+
 ### Fixed
 
 - `ussher` invoked with no arguments now prints `usage: ussher <username>`
@@ -100,6 +109,7 @@ Initial release.
 [#8]: https://github.com/dolph/ussher/pull/8
 [#10]: https://github.com/dolph/ussher/pull/10
 [#12]: https://github.com/dolph/ussher/issues/12
+[#13]: https://github.com/dolph/ussher/issues/13
 [#25]: https://github.com/dolph/ussher/pull/25
 [#29]: https://github.com/dolph/ussher/issues/29
 [#31]: https://github.com/dolph/ussher/issues/31

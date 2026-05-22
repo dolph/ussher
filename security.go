@@ -14,10 +14,17 @@ func isExecutableWritable() bool {
 		fmt.Printf("Failed to get a path to ussher executable: %v\n", err)
 		return true
 	}
+	return isPathUnsafelyWritable(executablePath)
+}
 
-	fileInfo, err := os.Stat(executablePath)
+// isPathUnsafelyWritable returns true if path's mode has the group-write
+// or other-write bit set, or if path can't be stat'd (failsafe). Extracted
+// from isExecutableWritable so the bit-mask logic is testable against an
+// arbitrary chmod'd file rather than /proc/self/exe.
+func isPathUnsafelyWritable(path string) bool {
+	fileInfo, err := os.Stat(path)
 	if err != nil {
-		fmt.Printf("Failed to stat ussher executable: %v\n", err)
+		fmt.Printf("Failed to stat %s: %v\n", path, err)
 		return true
 	}
 
@@ -25,13 +32,13 @@ func isExecutableWritable() bool {
 
 	// Check for group writable
 	if mode&0020 != 0 {
-		fmt.Println("ussher binary is group writable")
+		fmt.Printf("%s is group writable\n", path)
 		return true
 	}
 
 	// Check for world writable
 	if mode&0002 != 0 {
-		fmt.Println("ussher binary is world writable")
+		fmt.Printf("%s is world writable\n", path)
 		return true
 	}
 
@@ -41,7 +48,13 @@ func isExecutableWritable() bool {
 // Return true if ussher is running as the root user, which would violate
 // the principle of least-privilege.
 func isRunningAsRoot() bool {
-	return os.Getuid() == 0
+	return uidIsRoot(os.Getuid())
+}
+
+// uidIsRoot returns true iff the given uid is 0. Extracted so the
+// "is root?" predicate can be tested without actually running as root.
+func uidIsRoot(uid int) bool {
+	return uid == 0
 }
 
 // Ensure that the input string is a valid Linux account name on this host.
