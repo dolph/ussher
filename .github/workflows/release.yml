@@ -19,6 +19,8 @@ name: release
 # patch. `release:skip` always wins so a PR can be parked mid-flight;
 # otherwise the largest declared bump wins.
 #
+# A PR with no `release:*` label that changes only CI, docs or tool
+# settings counts as `release:skip`, since the binary would be the same.
 # Direct pushes to `main` (no PR) fall back to `release:patch`.
 
 on:
@@ -55,6 +57,9 @@ jobs:
 
       - name: Resolve merged PR and version bump
         id: bump
+        env:
+          # Paths that never reach the binary.
+          UNRELEASED: '^(\.github/|ci/)|\.md$|^(\.golangci\.yml|renovate\.json|\.gitignore)$'
         run: |
           set -euo pipefail
           pr_json="$(gh api "repos/${{ github.repository }}/commits/${HEAD_SHA}/pulls" --jq '.[0] // empty')"
@@ -81,6 +86,17 @@ jobs:
             bump=patch
           fi
 
+          # With no release label, a PR that changes only CI, docs or tool
+          # settings leaves the binary as it was, so it doesn't release either.
+          if ! grep -q '^release:' <<<"$labels"; then
+            files="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${number}/files" \
+              --jq '.[].filename')"
+            if ! grep -qvE "$UNRELEASED" <<<"$files"; then
+              echo "PR #${number} changes nothing the binary is built from."
+              bump=skip
+            fi
+          fi
+
           echo "Resolved bump: ${bump}"
           echo "bump=${bump}" >> "$GITHUB_OUTPUT"
           echo "pr=${number}" >> "$GITHUB_OUTPUT"
@@ -88,7 +104,7 @@ jobs:
       - name: Skip release
         if: steps.bump.outputs.bump == 'skip'
         run: |
-          echo "release:skip on PR #${{ steps.bump.outputs.pr }} — no tag created."
+          echo "PR #${{ steps.bump.outputs.pr }} resolved to release:skip — no tag created."
 
       - name: Compute next semver tag
         if: steps.bump.outputs.bump != 'skip'
